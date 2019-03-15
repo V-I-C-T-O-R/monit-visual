@@ -1,0 +1,118 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Reports | Events | Details</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp">Dashboard</a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/">Status</a>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../reports/analytics/">Reports</a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../admin/general/">Admin</a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <h1>Event details</h1>
+            </div>
+            <div class="row-fluid">
+                <div class="span8">
+                    <ul class="tableView">
+                        <li>Date <span class="accessory" data-bind="text: date"></span></li>
+                        <li>Host <span class="accessory"><a data-bind="text: host, attr: { href: hosturl}"></a></span></li>
+                        <li>Service name <span class="accessory" data-bind="text: servicename"></span></li>
+                        <li>Service type <span class="accessory" data-bind="text: servicetype"></span></li>
+                        <li>Event <span class="accessory" data-bind="text: event"></span></li>
+                        <li>Action <span class="accessory" data-bind="text: action"></span></li>
+                    </ul>
+                    <h3>Message</h3>
+                    <ul class="tableView">
+                        <li>
+                            <span class="text" data-bind="text: message, css: eventstateColor"></span>
+                        </li>
+                    </ul>
+                    <h3>Comments</h3>
+                    <div class="notes" data-bind="visible: notes().length">
+                        <ul class="bottom tableView" data-bind="foreach: notes">
+                            <li>
+                                <span class="text accessory-color" data-bind="text: date + ' by ' + uname + ':'"></span>
+                                <span class="text light-grey" data-bind="text: message"></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div> <!-- span8 -->
+            </div> <!-- row-fluid -->
+            <div class="row-fluid">
+                <div class="span8">
+                    <ul class="tableView">
+                        <li data-bind="validationElement: notice">
+                            <textarea id="notice" name="notice" maxlength="1024" rows="4" placeholder="Enter a comment..." data-bind="value: notice, valueUpdate:'afterkeydown'"></textarea>
+                        </li>
+                    </ul>
+                </div> <!-- span8 -->
+            </div> <!-- row-fluid -->
+            <div class="row-fluid">
+                <div class="span8">
+                    <button class="btn" data-bind="click: save, enable:notice().length, css: {'btn-block': isPhone()}">Add Comment</button>
+                </div> <!-- span8 -->
+            </div> <!-- row-fluid -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/f/strftime/strftime.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.validation.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../assets/reports/eventdetails.js?version=372"></script>
+</body>
+</html>

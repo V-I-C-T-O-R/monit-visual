@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Admin | Host Groups</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <link rel="stylesheet" href="../../assets/admin/admin_groups.css?version=372">
+</head>
+
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a class="active" target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <button id="crud" class="add-button" title="New Host Group" data-bind="click:add"></button>
+                <span class="hidden-phone crud add-hint"></span>
+                <h1>
+                    Host Groups
+                </h1>
+            </div>
+            <div class="row-fluid">
+                <p class="paragraphify">
+                    A Host Group is a collection of Hosts that can logically be grouped together, for instance, by functionality or by
+                    organizational or geographical location. In the Status, Events and Analytics Pages, Host Group can be used to view data for a
+                    set of Hosts and in the Rules page you can create alert rules that applies to a Host Group.
+                </p>
+                <!-- ko if: groups().length > 0 -->
+                <ul class="tableView accordion" data-bind="foreach: groups">
+                    <li class="list">
+                        <div class="accordionRow" data-bind="click:$parent.toggleExpand">
+                            <span data-bind="visible: !editing(), text: name, click: edit" class="editable-text"></span>
+                            <input data-bind="visible: editing(), value: name, valueUpdate: 'afterkeydown', hasFocus: editing(),
+                            event: { blur: updateName }, onEnter:stopEdit, click:edit, clickBubble: false" 
+                            placeholder="Host Group Name.." type="text" maxlength="250"/>
+                            <span class="accessory" data-bind="css:{expanded: $parent.isExpanded($data)}"></span>
+                        </div>
+                        <div class="accordionPanel" data-bind="slideVisible:$parent.isExpanded($data), slideDuration:300">
+                            <div class="toright remove-button" title="Delete Host Group" data-target="#confirmDelete" data-toggle="modal" data-bind="click:$root.confirmDelete"></div>
+                            <div class="row-fluid">
+                                <div class="span5 toleft">
+                                    <p class="smaller-font">Hosts in group:</p>
+                                    <select size="10" multiple data-bind="options: hostsInGroup, selectedOptions:hostsInGroupSelected, optionsText:'name'"></select>
+                                </div>
+                                <div id="arrows" class="span2" data-bind="css: {localpushdown : $root.shouldPushDown()}">
+                                    <span data-bind="click:addHostsToGroup" class="left-arrow-button" title="Add Hosts to Group"></span> 
+                                    <span data-bind="click:removeHostsFromGroup" class="right-arrow-button" title="Remove Hosts from Group" ></span> 
+                                </div>
+                                <div class="span5 toright">
+                                    <p class="smaller-font">Hosts:</p>
+                                    <select size="10" multiple data-bind="options: availableHosts, selectedOptions:availableHostsSelected, optionsText:'name'"></select>
+                                </div>
+                            </div> <!-- row-fluid -->
+                        </div> <!-- accordionPanel -->
+                    </li>
+                </ul>
+                <!-- /ko -->
+            </div> <!-- row-fluid -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Confirm Delete Dialog -->
+    <div id="confirmDelete" class="modal hide" data-bind="with:group">
+        <div class="modal-body">
+            <h2>Delete <span class="text-error" data-bind='text:name'></span>?</h2>
+            <p>Are you sure you want to remove this Host Group? There is no undo.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" data-dismiss="modal" data-bind="click:$parent.remove">Delete</button>
+        </div>
+    </div>
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/tableview.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/admin/admin_groups.js?version=372"></script>
+</body>
+</html>

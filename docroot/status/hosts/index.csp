@@ -1,0 +1,192 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Status</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <link rel="stylesheet" href="../../assets/status/status.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp">Dashboard</a>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../status/hosts/">Status</a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/">Reports</a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../admin/general/">Admin</a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>Status</h1>
+            </div>
+            <div class="row-fluid yui-skin-sam">
+                <div class="span12">
+                    <div class="toleft numHosts hidden-phone">Number of Hosts: <span data-bind="text: numHosts"></span></div>
+                    <div id="drilldown">
+                        <button id="drilldownReset" title="Reset Drill-Down" class="close">&times;</button>
+                        <input class="searchfield toright" id="hostname" size="15" placeholder="Find hosts..." value="" autocomplete="off">
+                        <div class="btn-group btn-hostgroup">
+                            <button class="btn btn-block dropdown-toggle" data-toggle="dropdown">
+                                <span class="caret"></span>
+                                <span data-bind="text: hostgroupsLabel"></span>
+                            </button>
+                            <ul class="dropdown-menu" data-bind="foreach: hostgroups">
+                                <li data-bind="event: {vclick: $root.selectHostGroup}, css:{checked: selected}">
+                                    <span data-bind="text: name"></span>
+                                </li>
+                                <!-- ko if: $index() === 0 -->
+                                <li class="divider"></li>
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <div class="btn-group btn-led">
+                            <button class="btn btn-block dropdown-toggle" data-toggle="dropdown">
+                                <span class="caret"></span>
+                                <span data-bind="html: ledsLabel"></span>
+                            </button>
+                            <ul class="dropdown-menu" data-bind="foreach: leds">
+                                <li data-bind="event: {vclick: $root.selectLed}, css: {checked: selected}">
+                                    <span data-bind="html: name"></span>
+                                </li>
+                                <!-- ko if: $index() === 0 -->
+                                <li class="divider"></li>
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                    </div> <!-- drilldown -->
+                </div> <!-- span12 -->
+                <div class="span12">
+                    <div id="status">
+                        <!-- Avoid render reshuffle by having an initial dimensional value to render in the DOM: -->&nbsp;
+                    </div>
+                </div> <!-- span12 -->
+            </div> <!-- row-fluid -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <div id="helpbox">
+        <div class="title"><h2>Status Help</h2></div>
+        <div class="content paragraphify">
+            <p>
+                This page shows the status of each monitored host based on periodic reports from Monit. The table auto-refresh itself each 5 seconds, although
+                update of new data also depends on how often Monit runs on each host. I.e. the lower the poll-cycle you run Monit with, the closer the host's
+                status will be displayed in "real-time".
+            </p>
+            <h3>Status table</h3>
+            <div>
+                The table list all monitored hosts where each row represent one host. You can drill-down on each host by clicking its row in the table. A row has
+                the following columns:
+                <img src="../../assets/status/tabledesc.png" alt="snapshot" class="snapshot">
+                The first column display a LED representing the host's error state:
+                <ul class="led">
+                    <li class="red">
+                        Error - Either the host did not report in or all services are down 
+                    </li>
+                    <li class="orange">
+                        Warning - At least one service is down or in unmonitored mode.
+                    </li>
+                    <li class="green">
+                        OK - All services are up and running 
+                    </li>
+                    <li class="grey">
+                        Host is in Ignored or in Inactive state. 
+                    </li>
+                </ul>
+            </div>
+            <p>
+                The next columns display the host's descriptive name, and cpu and memory usage. The last two columns display status of services and the number of
+                events registered on the host. Clicking the link in the events column will bring up the events log with drill-down filters preset for the host.
+            </p>
+            <h3>
+                Drill-down
+            </h3>
+            <p>
+                The drill-down menu above the table can be used to <em>filter</em> the table on various criteria. The menu is <span class="text-error">persistent</span>
+                between page reloads. This is especially useful if a filter was set and when you go into hosts details and then back again, the table remains the same. To
+                <strong>reset</strong> the drill-down menu, click the <strong class="muted">&times;</strong> icon in the search field. This will not only clear the
+                search field, but also all menues to default values.
+                
+                <img src="../../assets/status/drilldown.png" alt="snapshot" class="snapshot">
+                
+                To make it more manageable to work with many hosts, it is also recommended to divide hosts into host groups. You can then use the drill-down menu to filter
+                on hosts groups and work and switch between a sub-set of hosts in the status page.
+            </p>
+            <h3>Hints</h3>
+            <div>
+                <ul>
+                    <li>
+                        You can sort the table by clicking a column header. By default the table is sorted on the LED column which is useful to quickly see
+                        hosts with errors or warnings. To see which hosts are under heavy load, try sorting on %CPU or %Mem.
+                    </li>
+                    <li>
+                        The %CPU and %Mem bars change colors based on data. The thresholds are, green if less than 80%, orange if less than 95% and red if above
+                        95%. Grey is used if there are no data.
+                    </li>
+                    <li>
+                        If you hover the mouse cursor over the %CPU or %Mem bar, a tooltip is displayed with the actual value.
+                    </li>
+                    <li>
+                        Host names are descriptive and can be changed in <a target="webapp" href="../../admin/hosts/">Admin/Hosts</a>.
+                    </li>
+                </ul>
+            </div>
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="../../lib/f/yui/2/utilities/utilities.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/math.js?version=372"></script>
+    <script src="../../lib/js/ui.js?version=372"></script>
+    <script src="../../lib/js/menu.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../assets/status/status.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+</body>
+</html>

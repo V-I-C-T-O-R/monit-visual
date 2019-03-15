@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 9 to 10 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=OFF;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE host_backup (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  incarnation INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT 3,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host_backup (id, created_at, updated_at, incarnation, status, nameid, keepname, monitid, ipaddrin, ipaddrout, portin, portout, uname, password, sslin, sslout, description, poll, startdelay, controlfilenameid, statusmodified, servicemodified, serviceskew, serviceup, servicedown, serviceunmonitorauto, serviceunmonitormanual, version, platformname, platformrelease, platformversion, platformmachine, platformcpu, platformmemory, platformswap, statusheartbeat, eventscount) SELECT id, created_at, updated_at, 0, status, nameid, keepname, monitid, ipaddrin, ipaddrout, portin, portout, uname, password, sslin, sslout, description, poll, startdelay, controlfilenameid, statusmodified, servicemodified, serviceskew, serviceup, servicedown, serviceunmonitorauto, serviceunmonitormanual, version, platformname, platformrelease, platformversion, platformmachine, platformcpu, platformmemory, platformswap, statusheartbeat, eventscount FROM host;
+</statement>
+<statement>
+DROP TABLE host;
+</statement>
+<statement>
+CREATE TABLE host (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  incarnation INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT 3,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host SELECT * FROM host_backup;
+</statement>
+<statement>
+DROP TABLE host_backup;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+ALTER TABLE host ADD COLUMN incarnation INTEGER AFTER updated_at;
+</statement>
+
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+ALTER TABLE host ADD COLUMN incarnation INTEGER;
+</statement>
+
+</statements>
+
+</patch>
+

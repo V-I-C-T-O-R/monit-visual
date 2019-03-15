@@ -1,0 +1,1 @@
+(function(a){a.getJSON("../../session/get?key=CSRFToken",function(b){a(document).ajaxSend(function(f,d,c){if(c.type==="POST"){d.setRequestHeader("CSRFToken",b.CSRFToken)}})})})(jQuery);

@@ -1,0 +1,876 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 8 to 9 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=OFF;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE event_backup (
+  id INTEGER PRIMARY KEY,
+  hostid INTEGER NOT NULL,
+  serviceid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  collectedusec INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  servicetype INTEGER NOT NULL,
+  event INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  hasnotice INTEGER,
+  active INTEGER
+);
+</statement>
+<statement>
+INSERT INTO event_backup (id, hostid, serviceid, collectedsec, collectedusec, service_nameid, servicetype, event, state, action, message, hasnotice, active) SELECT id, hostid, NULL, collectedsec, collectedusec, service_nameid, servicetype, event, state, action, message, hasnotice, active FROM event;
+</statement>
+<statement>
+UPDATE event_backup SET serviceid=(SELECT DISTINCT service.id FROM service WHERE service.nameid=event_backup.service_nameid AND service.hostid=event_backup.hostid);
+</statement>
+<statement>
+DELETE FROM event_backup WHERE serviceid IS NULL;
+</statement>
+<statement>
+DROP TABLE event;
+</statement>
+<statement>
+CREATE TABLE event (
+  id INTEGER PRIMARY KEY,
+  hostid INTEGER NOT NULL,
+  serviceid INTEGER NOT NULL,
+  collectedsec INTEGER NOT NULL,
+  collectedusec INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  servicetype INTEGER NOT NULL,
+  event INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  hasnotice INTEGER,
+  active INTEGER,
+  CONSTRAINT event_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT event_serviceid_fk FOREIGN KEY(serviceid) REFERENCES service(id) ON DELETE CASCADE,
+  CONSTRAINT event_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO event SELECT * FROM event_backup;
+</statement>
+<statement>
+DROP TABLE event_backup;
+</statement>
+<statement>
+CREATE INDEX event_hostid_index ON event(hostid);
+</statement>
+<statement>
+CREATE INDEX event_serviceid_index ON event(serviceid);
+</statement>
+<statement>
+CREATE INDEX event_collectedsec_collectedusec_index ON event(collectedsec, collectedusec);
+</statement>
+<statement>
+CREATE INDEX event_service_nameid_index ON event(service_nameid);
+</statement>
+<statement>
+CREATE INDEX event_servicetype_index ON event(servicetype);
+</statement>
+<statement>
+CREATE INDEX event_state_index ON event(state);
+</statement>
+<statement>
+CREATE INDEX event_event_index ON event(event);
+</statement>
+<statement>
+CREATE INDEX event_active_index ON event(active);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE host_backup (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT 3,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host_backup (id, created_at, updated_at, status, nameid, keepname, monitid, ipaddrin, ipaddrout, portin, portout, uname, password, sslin, sslout, description, poll, startdelay, controlfilenameid, statusmodified, servicemodified, serviceskew, serviceup, servicedown, serviceunmonitorauto, serviceunmonitormanual, version, platformname, platformrelease, platformversion, platformmachine, platformcpu, platformmemory, platformswap, statusheartbeat, eventscount) SELECT id, 0, 0, status, nameid, 1, monitid, ipaddrin, ipaddrout, portin, portout, uname, password, sslin, sslout, description, poll, startdelay, controlfilenameid, statusmodified, servicemodified, serviceskew, serviceup, servicedown, serviceunmonitorauto, serviceunmonitormanual, version, platformname, platformrelease, platformversion, platformmachine, platformcpu, platformmemory, platformswap, statusheartbeat, eventscount FROM host;
+</statement>
+<statement>
+DROP TABLE host;
+</statement>
+<statement>
+CREATE TABLE host (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT 3,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host SELECT * FROM host_backup;
+</statement>
+<statement>
+DROP TABLE host_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE service_backup (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  status INTEGER NOT NULL,
+  statushint INTEGER NOT NULL,
+  monitoringstate INTEGER NOT NULL,
+  monitoringmode INTEGER NOT NULL,
+  statusmodified INTEGER DEFAULT 0,
+  eventscount INTEGER DEFAULT 0,
+  everytype INTEGER DEFAULT 0,
+  everycyclenumber INTEGER DEFAULT 0,
+  everycyclecounter INTEGER DEFAULT 0,
+  everycron VARCHAR(255),
+  CONSTRAINT service_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT service_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO service_backup (id, created_at, updated_at, nameid, hostid, type, status, statushint, monitoringstate, monitoringmode, statusmodified, eventscount, everytype, everycyclenumber, everycyclecounter, everycron) SELECT id, 0, 0, nameid, hostid, type, status, statushint, monitoringstate, monitoringmode, statusmodified, eventscount, everytype, everycyclenumber, everycyclecounter, everycron FROM service;
+</statement>
+<statement>
+DROP TABLE service;
+</statement>
+<statement>
+CREATE TABLE service (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  status INTEGER NOT NULL,
+  statushint INTEGER NOT NULL,
+  monitoringstate INTEGER NOT NULL,
+  monitoringmode INTEGER NOT NULL,
+  statusmodified INTEGER DEFAULT 0,
+  eventscount INTEGER DEFAULT 0,
+  everytype INTEGER DEFAULT 0,
+  everycyclenumber INTEGER DEFAULT 0,
+  everycyclecounter INTEGER DEFAULT 0,
+  everycron VARCHAR(255),
+  CONSTRAINT service_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT service_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO service SELECT * FROM service_backup;
+</statement>
+<statement>
+DROP TABLE service_backup;
+</statement>
+<statement>
+CREATE INDEX service_hostid_index ON service(hostid);
+</statement>
+<statement>
+CREATE INDEX servicegroup_hostid_index ON servicegroup(hostid);
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_1m SELECT * FROM statistics_floataggregate_1m;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_15m SELECT * FROM statistics_floataggregate_15m;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_2h SELECT * FROM statistics_floataggregate_2h;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_12h SELECT * FROM statistics_floataggregate_12h;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_1d SELECT * FROM statistics_floataggregate_1d;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_7d SELECT * FROM statistics_floataggregate_7d;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_14d SELECT * FROM statistics_floataggregate_14d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_1m;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_15m;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_2h;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_12h;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_1d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_7d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_14d;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_1m RENAME TO statistics_aggregate_1m;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_15m RENAME TO statistics_aggregate_15m;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_2h RENAME TO statistics_aggregate_2h;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_12h RENAME TO statistics_aggregate_12h;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_1d RENAME TO statistics_aggregate_1d;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_7d RENAME TO statistics_aggregate_7d;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_14d RENAME TO statistics_aggregate_14d;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_1m_statisticsid_index;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_15m_statisticsid_index;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_2h_statisticsid_index;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_12h_statisticsid_index;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_1d_statisticsid_index;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_7d_statisticsid_index;
+</statement>
+<statement>
+DROP INDEX statistics_doubleaggregate_14d_statisticsid_index;
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_1m_statisticsid_index ON statistics_aggregate_1m(statisticsid);
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_15m_statisticsid_index ON statistics_aggregate_15m(statisticsid);
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_2h_statisticsid_index ON statistics_aggregate_2h(statisticsid);
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_12h_statisticsid_index ON statistics_aggregate_12h(statisticsid);
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_1d_statisticsid_index ON statistics_aggregate_1d(statisticsid);
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_7d_statisticsid_index ON statistics_aggregate_7d(statisticsid);
+</statement>
+<statement>
+CREATE INDEX statistics_aggregate_14d_statisticsid_index ON statistics_aggregate_14d(statisticsid);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE rule_backup (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  description VARCHAR(255),
+  active CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO rule_backup (id, created_at, updated_at, description, active) SELECT id, 0, 0, description, active FROM rule;
+</statement>
+<statement>
+DROP TABLE rule;
+</statement>
+<statement>
+CREATE TABLE rule (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  description VARCHAR(255),
+  active CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO rule SELECT * FROM rule_backup;
+</statement>
+<statement>
+CREATE INDEX rule_active_index ON rule(active);
+</statement>
+<statement>
+UPDATE rule SET created_at=0, updated_at=0;
+</statement>
+<statement>
+DROP TABLE rule_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE actionrow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT 0
+);
+</statement>
+<statement>
+INSERT INTO actionrow_backup (id, ruleid, action, repetition) SELECT id, ruleid, action, repetition FROM actionrow;
+</statement>
+<statement>
+DROP TABLE actionrow;
+</statement>
+<statement>
+CREATE TABLE actionrow (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT 0,
+  CONSTRAINT actionrow_ruleid_fk FOREIGN KEY(ruleid) REFERENCES rule(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO actionrow SELECT * FROM actionrow_backup;
+</statement>
+<statement>
+DROP TABLE actionrow_backup;
+</statement>
+<statement>
+UPDATE actionrow SET repetition=0;
+</statement>
+<statement>
+CREATE INDEX actionrow_action_index ON actionrow(action);
+</statement>
+<statement>
+CREATE TABLE actionqueue (
+  actionrowid INTEGER NOT NULL,
+  eventid INTEGER NOT NULL,
+  created_at INTEGER,
+  process_at INTEGER,
+  CONSTRAINT actionqueue_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE,
+  CONSTRAINT actionqueue_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX actionqueue_actionrowid_index ON actionqueue(actionrowid);
+</statement>
+<statement>
+CREATE INDEX actionqueue_eventid_index ON actionqueue(eventid);
+</statement>
+<statement>
+CREATE INDEX actionqueue_process_at_index ON actionqueue(process_at);
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN purgeevents INTEGER;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN purgeanalytics INTEGER;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE users_backup (
+  uname VARCHAR(20) PRIMARY KEY,
+  password VARCHAR(56) NOT NULL,
+  fullname VARCHAR(255),
+  title VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(40),
+  mobile VARCHAR(40),
+  imname VARCHAR(255),
+  imtype VARCHAR(20),
+  image VARCHAR(255),
+  refresh INTEGER DEFAULT 5000
+);
+</statement>
+<statement>
+INSERT INTO users_backup SELECT uname, password, fullname, title, email, phone, mobile, imname, imtype, image, refresh FROM users;
+</statement>
+<statement>
+DROP TABLE users;
+</statement>
+<statement>
+CREATE TABLE users (
+  uname VARCHAR(20) PRIMARY KEY,
+  password VARCHAR(56) NOT NULL,
+  fullname VARCHAR(255),
+  title VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(40),
+  mobile VARCHAR(40),
+  imname VARCHAR(255),
+  imtype VARCHAR(20),
+  image VARCHAR(255),
+  refresh INTEGER DEFAULT 5000
+);
+</statement>
+<statement>
+INSERT INTO users SELECT * FROM users_backup;
+</statement>
+<statement>
+DROP TABLE users_backup;
+</statement>
+<statement>
+ALTER TABLE messagequeue ADD COLUMN maxmsgsize INTEGER;
+</statement>
+<statement>
+ALTER TABLE messagequeue ADD COLUMN maxmsgevents INTEGER;
+</statement>
+<statement>
+UPDATE messagequeue SET maxmsgsize=1048576, maxmsgevents=100;
+</statement>
+<statement>
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, contenttype, isdefault) VALUES (
+3,
+"Message limit reached",
+"mmonit@$HOST",
+"M/Monit report ($HOST: $EVENT $SERVICE on $DATE)",
+"M/Monit report ($COUNT events)",
+"Message size limit reached, please see the M/Monit events log.
+
+Your faithful employee,
+M/Monit",
+0,
+0);
+</statement>
+<statement>
+UPDATE mmonit SET purgeevents=11, purgeanalytics=10;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+ALTER TABLE event ADD COLUMN serviceid INTEGER AFTER hostid;
+</statement>
+<statement>
+UPDATE event SET serviceid=(SELECT DISTINCT service.id FROM service WHERE service.nameid=event.service_nameid AND service.hostid=event.hostid);
+</statement>
+<statement>
+DELETE FROM event WHERE serviceid IS NULL;
+</statement>
+<statement>
+ALTER TABLE event MODIFY COLUMN serviceid INTEGER NOT NULL;
+</statement>
+<statement>
+ALTER TABLE event ADD CONSTRAINT event_serviceid_fk FOREIGN KEY (serviceid) REFERENCES service (id) ON DELETE CASCADE;
+</statement>
+<statement>
+CREATE INDEX event_serviceid_index ON event(serviceid);
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN created_at INTEGER AFTER id;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN updated_at INTEGER AFTER created_at;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN keepname INTEGER DEFAULT 0 AFTER nameid;
+</statement>
+<statement>
+UPDATE host SET keepname=1;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN created_at INTEGER AFTER id;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN updated_at INTEGER AFTER created_at;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_1m SELECT * FROM statistics_floataggregate_1m;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_15m SELECT * FROM statistics_floataggregate_15m;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_2h SELECT * FROM statistics_floataggregate_2h;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_12h SELECT * FROM statistics_floataggregate_12h;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_1d SELECT * FROM statistics_floataggregate_1d;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_7d SELECT * FROM statistics_floataggregate_7d;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_14d SELECT * FROM statistics_floataggregate_14d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_1m;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_15m;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_2h;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_12h;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_1d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_7d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_14d;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_1m TO statistics_aggregate_1m;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_15m TO statistics_aggregate_15m;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_2h TO statistics_aggregate_2h;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_12h TO statistics_aggregate_12h;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_1d TO statistics_aggregate_1d;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_7d TO statistics_aggregate_7d;
+</statement>
+<statement>
+RENAME TABLE statistics_doubleaggregate_14d TO statistics_aggregate_14d;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN purgeevents INTEGER AFTER welcome;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN purgeanalytics INTEGER AFTER purgeevents;
+</statement>
+<statement>
+ALTER TABLE users MODIFY COLUMN image VARCHAR(255);
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN created_at INTEGER AFTER id;
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN updated_at INTEGER AFTER created_at;
+</statement>
+<statement>
+UPDATE rule SET created_at=0, updated_at=0;
+</statement>
+<statement>
+ALTER TABLE actionrow MODIFY COLUMN repetition INTEGER DEFAULT 0;
+</statement>
+<statement>
+UPDATE actionrow SET repetition=0;
+</statement>
+<statement>
+CREATE INDEX actionrow_action_index ON actionrow(action);
+</statement>
+<statement>
+CREATE TABLE actionqueue (
+  actionrowid INTEGER NOT NULL,
+  eventid INTEGER NOT NULL,
+  created_at INTEGER,
+  process_at INTEGER,
+  CONSTRAINT actionqueue_actionrowid_fk FOREIGN KEY (actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE,
+  CONSTRAINT actionqueue_eventid_fk FOREIGN KEY (eventid) REFERENCES event(id) ON DELETE CASCADE,
+  INDEX actionqueue_actionrowid_index (actionrowid),
+  INDEX actionqueue_eventid_index (eventid),
+  INDEX actionqueue_process_at_index (process_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+ALTER TABLE messagequeue ADD COLUMN maxmsgsize INTEGER AFTER flush;
+</statement>
+<statement>
+ALTER TABLE messagequeue ADD COLUMN maxmsgevents INTEGER AFTER maxmsgsize;
+</statement>
+<statement>
+UPDATE messagequeue SET maxmsgsize=1048576, maxmsgevents=100;
+</statement>
+<statement>
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, contenttype, isdefault) VALUES (
+3,
+"Message limit reached",
+"mmonit@$HOST",
+"M/Monit report ($HOST: $EVENT $SERVICE on $DATE)",
+"M/Monit report ($COUNT events)",
+"Message size limit reached, please see the M/Monit events log.
+
+Your faithful employee,
+M/Monit",
+0,
+0);
+</statement>
+<statement>
+UPDATE mmonit SET purgeevents=11, purgeanalytics=10;
+</statement>
+
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+ALTER TABLE event ADD COLUMN serviceid INTEGER;
+</statement>
+<statement>
+UPDATE event SET serviceid=(SELECT DISTINCT service.id FROM service WHERE service.nameid=event.service_nameid AND service.hostid=event.hostid);
+</statement>
+<statement>
+DELETE FROM event WHERE serviceid IS NULL;
+</statement>
+<statement>
+ALTER TABLE event ALTER COLUMN serviceid SET NOT NULL;
+</statement>
+<statement>
+ALTER TABLE event ADD CONSTRAINT event_serviceid_fk FOREIGN KEY (serviceid) REFERENCES service (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+CREATE INDEX event_serviceid_index ON event(serviceid);
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN created_at INTEGER;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN updated_at INTEGER;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN keepname INTEGER DEFAULT 0;
+</statement>
+<statement>
+UPDATE host SET keepname=1;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN created_at INTEGER;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN updated_at INTEGER;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_1m SELECT * FROM statistics_floataggregate_1m;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_15m SELECT * FROM statistics_floataggregate_15m;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_2h SELECT * FROM statistics_floataggregate_2h;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_12h SELECT * FROM statistics_floataggregate_12h;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_1d SELECT * FROM statistics_floataggregate_1d;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_7d SELECT * FROM statistics_floataggregate_7d;
+</statement>
+<statement>
+INSERT INTO statistics_doubleaggregate_14d SELECT * FROM statistics_floataggregate_14d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_1m;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_15m;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_2h;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_12h;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_1d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_7d;
+</statement>
+<statement>
+DROP TABLE statistics_floataggregate_14d;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_1m RENAME TO statistics_aggregate_1m;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_15m RENAME TO statistics_aggregate_15m;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_2h RENAME TO statistics_aggregate_2h;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_12h RENAME TO statistics_aggregate_12h;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_1d RENAME TO statistics_aggregate_1d;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_7d RENAME TO statistics_aggregate_7d;
+</statement>
+<statement>
+ALTER TABLE statistics_doubleaggregate_14d RENAME TO statistics_aggregate_14d;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN purgeevents INTEGER;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN purgeanalytics INTEGER;
+</statement>
+<statement>
+ALTER TABLE users ALTER COLUMN image TYPE CHARACTER VARYING(255);
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN created_at INTEGER;
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN updated_at INTEGER;
+</statement>
+<statement>
+UPDATE rule SET created_at=0, updated_at=0;
+</statement>
+<statement>
+ALTER TABLE actionrow ALTER COLUMN repetition SET DEFAULT 0;
+</statement>
+<statement>
+UPDATE actionrow SET repetition=0;
+</statement>
+<statement>
+CREATE INDEX actionrow_action_index ON actionrow(action);
+</statement>
+<statement>
+CREATE TABLE actionqueue (
+  actionrowid INTEGER NOT NULL,
+  eventid INTEGER NOT NULL,
+  created_at INTEGER,
+  process_at INTEGER,
+  CONSTRAINT actionqueue_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) MATCH FULL ON DELETE CASCADE,
+  CONSTRAINT actionqueue_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX actionqueue_actionrowid_index ON actionqueue(actionrowid);
+</statement>
+<statement>
+CREATE INDEX actionqueue_eventid_index ON actionqueue(eventid);
+</statement>
+<statement>
+CREATE INDEX actionqueue_process_at_index ON actionqueue(process_at);
+</statement>
+<statement>
+ALTER TABLE messagequeue ADD COLUMN maxmsgsize INTEGER;
+</statement>
+<statement>
+ALTER TABLE messagequeue ADD COLUMN maxmsgevents INTEGER;
+</statement>
+<statement>
+UPDATE messagequeue SET maxmsgsize=1048576, maxmsgevents=100;
+</statement>
+<statement>
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, contenttype, isdefault) VALUES (
+3,
+'Message limit reached',
+'mmonit@$HOST',
+'M/Monit report ($HOST: $EVENT $SERVICE on $DATE)',
+'M/Monit report ($COUNT events)',
+'Message size limit reached, please see the M/Monit events log.
+
+Your faithful employee,
+M/Monit',
+0,
+0);
+</statement>
+<statement>
+UPDATE mmonit SET purgeevents=11, purgeanalytics=10;
+</statement>
+
+</statements>
+
+</patch>
+

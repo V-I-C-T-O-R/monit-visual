@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 11 to 12 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=OFF;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN skew INTEGER;
+</statement>
+<statement>
+UPDATE mmonit SET skew=3;
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN operator CHAR(1) DEFAULT 0;
+</statement>
+<statement>
+UPDATE rule SET operator=0;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE host_backup (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  incarnation INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT -1,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host_backup SELECT * FROM host;
+</statement>
+<statement>
+DROP TABLE host;
+</statement>
+<statement>
+CREATE TABLE host (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  incarnation INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT -1,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host SELECT * FROM host_backup;
+</statement>
+<statement>
+DROP TABLE host_backup;
+</statement>
+<statement>
+UPDATE host SET serviceskew=-1 WHERE serviceskew=3;
+</statement>
+<statement>
+UPDATE statistics SET datatype=4 WHERE type IN (22, 23);
+</statement>
+<statement>
+UPDATE host SET eventscount=(SELECT COUNT(*) FROM event WHERE event.hostid=host.id);
+</statement>
+<statement>
+UPDATE service SET eventscount=(SELECT COUNT(*) FROM event WHERE event.hostid=service.hostid AND event.service_nameid=service.nameid);
+</statement>
+<statement>
+VACUUM;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+ALTER TABLE mmonit ADD COLUMN skew INTEGER AFTER purgeanalytics;
+</statement>
+<statement>
+UPDATE mmonit SET skew=3;
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN operator CHAR(1) DEFAULT 0 AFTER active;
+</statement>
+<statement>
+UPDATE rule SET operator=0;
+</statement>
+<statement>
+ALTER TABLE host ALTER COLUMN serviceskew SET DEFAULT -1;
+</statement>
+<statement>
+UPDATE host SET serviceskew=-1 WHERE serviceskew=3;
+</statement>
+<statement>
+UPDATE statistics SET datatype=4 WHERE type IN (22, 23);
+</statement>
+<statement>
+UPDATE host SET eventscount=(SELECT COUNT(*) FROM event WHERE event.hostid=host.id);
+</statement>
+<statement>
+UPDATE service t1 JOIN (SELECT hostid, service_nameid, COUNT(*) count FROM event GROUP BY hostid, service_nameid) t2 ON t1.hostid=t2.hostid AND t1.nameid=t2.service_nameid SET eventscount=count;
+</statement>
+
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+ALTER TABLE mmonit ADD COLUMN skew INTEGER;
+</statement>
+<statement>
+UPDATE mmonit SET skew=3;
+</statement>
+<statement>
+ALTER TABLE rule ADD COLUMN operator SMALLINT DEFAULT 0;
+</statement>
+<statement>
+UPDATE rule SET operator=0;
+</statement>
+<statement>
+ALTER TABLE host ALTER COLUMN serviceskew SET DEFAULT -1;
+</statement>
+<statement>
+UPDATE host SET serviceskew=-1 WHERE serviceskew=3;
+</statement>
+<statement>
+UPDATE statistics SET datatype=4 WHERE type IN (22, 23);
+</statement>
+<statement>
+UPDATE host SET eventscount=(SELECT COUNT(*) FROM event WHERE event.hostid=host.id);
+</statement>
+<statement>
+UPDATE service SET eventscount=(SELECT COUNT(*) FROM event WHERE event.hostid=service.hostid AND event.service_nameid=service.nameid);
+</statement>
+
+</statements>
+
+</patch>
+

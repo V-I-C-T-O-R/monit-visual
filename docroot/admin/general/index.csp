@@ -1,0 +1,303 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Admin</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <style type="text/css">
+        #announcement {display:none}
+        #about > *, #about h4  {float:none;font-size:15px;font-weight:normal;}
+        #feed h4:first-child {margin-top:0}
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>General</h1>
+            </div>
+            <div class="row-fluid">
+                <div class="span8">
+                    <ul class="tableView">
+                        <li>M/Monit version <span class="accessory"><?cs var:Request.Param.version ?>-<?cs var:Request.Param.platform ?>-<?cs var:Request.Param.machine ?></span></li>
+                    </ul>
+                    <h3>License information</h3>
+                    <ul class="tableView">
+                        <?cs if:Request.Param.license_expire?>
+                        <li>
+                            License expire on <span class="accessory"><?cs var:Request.Param.license_expire ?></span>
+                        </li>
+                        <?cs else ?>
+                        <li>
+                            Owner <span class="accessory"><?cs var:Request.Param.license_owner ?></span>
+                        </li>
+                        <li>
+                            Serial Number <span class="accessory"><?cs var:Request.Param.license_serial ?></span>
+                        </li>
+                        <li>
+                            Type <span class="accessory"><?cs var:Request.Param.license_type ?></span>
+                        </li>
+                        <li>
+                            Hosts
+                            <span class="accessory">
+                                <?cs if:Request.Param.license_limitation > 0?>
+                                    <div class="progress" style="margin:0; width:120px;" title="<?cs var:Request.Param.current_hosts ?> of <?cs var:Request.Param.license_limitation ?> hosts">
+                                        <div class="bar" style="width:<?cs var:Request.Param.license_ratio ?>%;"></div>
+                                    </div>
+                                <?cs else ?>
+                                    <span class="label label-info" title="Currently monitoring <?cs var:Request.Param.current_hosts ?> hosts">Unlimited</span>
+                                <?cs /if ?>
+                            </span>
+                        </li>
+                        <li>
+                            Registered <span class="accessory"><?cs var:Request.Param.license_registered ?></span>
+                        </li>
+                        <?cs /if ?>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul class="tableView">
+                        <li>
+                            <span class="valign-middle">Report a Bug</span>
+                            <span class="accessory">
+                                <a class="btn btn-small" href="http://mmonit.com/issue/">
+                                    <i class="icon-bug"></i>
+                                </a>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="valign-middle">Mailing List</span>
+                            <span class="accessory">
+                                <a class="btn btn-small" href="http://www.tildeslash.com/mailman/listinfo/mmonit-announce">
+                                    <i class="icon-list"></i>
+                                </a>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="valign-middle">Documentation</span>
+                            <span class="accessory">
+                                <a class="btn btn-small" href="http://mmonit.com/documentation/">
+                                    <i class="icon-book"></i>
+                                </a>
+                            </span>
+                        </li>
+                    </ul>
+                    <h3>TCP/IP Connectors</h3>
+                    <ul class="tableView">
+                        <?cs each:connector = Request.Param.connector ?>
+                        <li>
+                            IPv<?cs var:connector.ipversion ?> <span class="accessory">Scheme '<?cs var:connector.scheme ?>' at <?cs var:connector.addr ?>:<?cs var:connector.port ?>  with max <?cs var:connector.processors ?> processor threads</span>
+                        </li>
+                        <?cs /each ?>
+                    </ul>
+                    <h3>Database Connection Pool</h3>
+                    <ul class="tableView">
+                        <li>Database type<span class="accessory"><?cs var:Request.Param.database_type ?></span></li>
+                        <li>Active connections<span class="accessory"><?cs var:Request.Param.database_pool_active ?> </span></li>
+                        <li>Available connections<span class="accessory"><?cs var:Request.Param.database_pool_size ?></span></li>
+                        <li>Minimum size<span class="accessory"><?cs var:Request.Param.database_pool_min_size ?> connections</span></li>
+                        <li>Maximum size<span class="accessory"><?cs var:Request.Param.database_pool_max_size ?> connections</span></li>
+                    </ul>
+                    <h3>Login Sessions</h3>
+                    <ul class="tableView">
+                        <li>Active Sessions<span class="accessory"><?cs var:Request.Param.session_active ?></span></li>
+                        <li>Active Sessions allowed<span class="accessory"><?cs var:Request.Param.session_maxactive ?></span></li>
+                        <li>Session timeout<span class="accessory"><?cs var:Request.Param.session_timeout / 60 ?> Minutes</span></li>
+                    </ul>
+                    <h3>Log files</h3>
+                    <ul class="tableView">
+                        <li>Error<span title="<?cs var:Request.Param.error_logfile ?>" class="accessory"><?cs var:Request.Param.error_logfile ?></span></li>
+                        <li>Application<span title="<?cs var:Request.Param.logfile ?>" class="accessory"><?cs var:Request.Param.logfile ?></span></li>
+                        <?cs if:Request.Param.access_logfile?>
+                        <li>Access<span title="<?cs var:Request.Param.access_logfile ?>" class="accessory"><?cs var:Request.Param.access_logfile ?></span></li>
+                        <?cs /if ?>
+                    </ul>
+                    <h3>Settings</h3>
+                    <ul class="tableView">
+                        <li class="tableViewDropDown">
+                            Delete events
+                            <span class="accessory">
+                                <div class="btn-group dropup">
+                                    <button class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+                                        <span class="caret"></span>
+                                        <div data-bind="html: deleteEventsLabel">Select interval</div>
+                                    </button>
+                                    <ul class="dropdown-menu pull-right" data-bind="foreach: deleteEventsMenu">
+                                        <li data-bind="event: {vclick:$root.selectPurgeEvents}, css:{checked:selected}">
+                                            <span data-bind="html: name"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </span>
+                        </li>
+                        <li class="tableViewDropDown">
+                            Delete analytics
+                            <span class="accessory">
+                                <div class="btn-group dropup">
+                                    <button class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+                                        <span class="caret"></span>
+                                        <div data-bind="html: deleteAnalyticsLabel">Select interval</div>
+                                    </button>
+                                    <ul class="dropdown-menu pull-right" data-bind="foreach: deleteAnalyticsMenu">
+                                        <li data-bind="event: {vclick:$root.selectPurgeAnalytics}, css:{checked:selected}">
+                                            <span data-bind="html: name"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </span>
+                        </li>
+                    </ul>
+                </div> <!-- span8 -->
+                <div class="span4">
+                    <h3 class="visible-phone">About M/Monit</h3>
+                    <ul class="tableView transparent" id="about">
+                        <li>
+                            <span class="text">
+                                M/Monit is a product of <a href="http://tildeslash.com/">Tildeslash Ltd</a>. For inquires about this
+                                Software, see <a href="http://mmonit.com/contact/">contact information</a> or send us an email at <a
+                                href="mailto:info@mmonit.com">info@mmonit.com</a>.
+                            </span>
+                        </li>
+                        <li id="announcement">
+                            <span class="text">
+                                <div id="feed"></div>
+                            </span>
+                        </li>
+                    </ul>
+                </div> <!-- span4 -->
+            </div> <!-- row -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Hidden -->
+    <!-- Confirm Delete Events Dialog -->
+    <div id="confirmDeleteEvents" class="modal hide">
+        <div class="modal-body">
+            <h2>
+                Delete events older than <span data-bind="text:purgeEventsSelection().description"></span>?
+            </h2>
+            <p data-bind="visible:purgeEventsSelection().id < 9">
+                The uptime report utilize events for reporting Hosts and Service uptime. If this setting is selected, the uptime
+                report will be limited to <span data-bind="text:purgeEventsSelection().description"></span>.
+            </p>
+            <p>
+                If you press [Confirm], events older than <span data-bind="text:purgeEventsSelection().description"></span> will be deleted from the database now and a job
+                scheduler will be setup to automatically delete events older than <span data-bind="text:purgeEventsSelection().description"></span> once per week. Are you sure?
+                There is no undo.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.selectPurgeEventsConfirm">Confirm</button>
+        </div>
+    </div>
+    <!-- Confirm Delete Analytics Dialog -->
+    <div id="confirmDeleteAnalytics" class="modal hide">
+        <div class="modal-body">
+            <h2>
+                Delete analytics data older than <span data-bind="text:purgeAnalyticsSelection().description"></span>?
+            </h2>
+            <p>
+                If you press [Confirm], analytics data older than <span data-bind="text:purgeAnalyticsSelection().description"></span> will be deleted from the database now
+                and analytics data older than <span data-bind="text:purgeAnalyticsSelection().description"></span> will automatically be deleted in the future. Are you sure?
+                There is no undo.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.selectPurgeAnalyticsConfirm">Confirm</button>
+        </div>
+    </div>
+    <!-- Help -->
+    <div id="helpbox">
+        <div class="title"><h2>General Help</h2></div>
+        <div class="content paragraphify">
+            <p>
+                This page shows M/Monit runtime values and a general settings section at the bottom of the page.
+            </p>
+            <h3>
+                Settings
+            </h3>
+            <dl class="dl-horizontal">
+                <dt>
+                    Delete events
+                </dt>
+                <dd>
+                    By default, <a href="../../reports/events/">events</a> are stored in the M/Monit database and never deleted.
+                    This means that the events log will grow over time. It can be useful to prune the events log to save space or
+                    if drill-down in the events log is starting to become slow due to an abundance of data. The <i>Delete
+                    events</i> option can be used to delete old events now and automatic remove events in the future.
+                </dd>
+                <dt>
+                    Delete analytics
+                </dt>
+                <dd>
+                    Analytics data (that is, data used to create charts in M/Monit) is stored and aggregated in the M/Monit
+                    database for 3 years, after which it is automatically deleted. If old analytics data is not useful nor
+                    relevant, you can use this option to store analytics data for a shorter time and thereby save space and
+                    possibly generate charts faster.
+                </dd>
+            </dl>
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/menu.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/admin/admin_general.js?version=372"></script>
+</body>
+</html>

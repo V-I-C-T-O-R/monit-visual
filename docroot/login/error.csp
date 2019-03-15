@@ -1,0 +1,59 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <title>M/Monit</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>apple-touch-icon-precomposed.png"/>
+    <link rel="apple-touch-startup-image" href="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>img/startup.png">
+    <link rel="stylesheet" href="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>lib/css/login.css">
+</head>
+<body>
+    <div id="wrap">
+        <div class="liner error"></div>
+        <div id="main">
+            <div id="logo"></div>
+            <p class="text-error tocenter hidden-phone">Invalid username and/or password. Please try again</p>
+            <form action="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>z_security_check" method="post" autocomplete="off">
+                <ul class="tableView">
+                    <li>
+                        <input class="accessory-color" type="text" name="z_username" placeholder="Username">
+                    </li>
+                    <li>
+                        <input class="accessory-color" type="password" name="z_password" placeholder="Password">
+                    </li>
+                    <li>
+                        <span class="remember">Keep me signed in</span>
+                        <span class="accessory">
+                            <label class="switch-button">
+                                <input name="z_remember_me" type="checkbox" />
+                                <span></span>
+                            </label>
+                        </span>
+                    </li>
+                </ul>  
+                <div class="spacer"></div>
+                <input type="submit" class="btn btn-large btn-block btn-danger" value="Login"/>
+            </form>
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="tocenter hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <script src="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>lib/f/jquery/jquery.js"></script>
+    <script src="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>lib/f/jquery/jquery.mobile.vmouse.js"></script>
+    <script src="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>lib/js/webapp.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 13 to 14 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=OFF;
+</statement>
+<statement>
+UPDATE statistics SET datatype=4 WHERE type IN (29, 33, 34);
+</statement>
+<statement>
+UPDATE statistics SET datatype=32 WHERE type IN (19, 20);
+</statement>
+<statement>
+VACUUM;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+UPDATE statistics SET datatype=4 WHERE type IN (29, 33, 34);
+</statement>
+<statement>
+UPDATE statistics SET datatype=32 WHERE type IN (19, 20);
+</statement>
+
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+UPDATE statistics SET datatype=4 WHERE type IN (29, 33, 34);
+</statement>
+<statement>
+UPDATE statistics SET datatype=32 WHERE type IN (19, 20);
+</statement>
+
+</statements>
+
+</patch>
+

@@ -1,0 +1,14 @@
+2019-03-14 16:19:10 mmonit 3.7.2 started
+2019-03-14 16:27:06 [client 192.168.26.245] HTTP 408 Request Timeout 
+2019-03-14 16:37:18 mmonit 3.7.2 is shutting down.. (please wait)
+2019-03-14 16:38:42 mmonit 3.7.2 started
+2019-03-15 09:29:48 mmonit 3.7.2 is shutting down.. (please wait)
+2019-03-15 09:30:12 mmonit 3.7.2 started
+2019-03-15 09:30:42 [client 192.168.26.245] HTTP 408 Request Timeout 
+2019-03-15 09:32:48 mmonit 3.7.2 is shutting down.. (please wait)
+2019-03-15 09:33:00 AssertException: No license key defined inside the <License> element -- in '/opt/monitor/mmonit-3.7.2/conf/server.xml' near line 385
+2019-03-15 09:35:15 mmonit 3.7.2 started
+2019-03-15 09:40:43 mmonit 3.7.2 is shutting down.. (please wait)
+2019-03-15 09:40:49 mmonit 3.7.2 started
+2019-03-15 10:18:26 mmonit 3.7.2 is shutting down.. (please wait)
+2019-03-15 10:21:12 mmonit 3.7.2 started

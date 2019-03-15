@@ -1,0 +1,21 @@
+# M/Monit script for upstart (ubuntu)
+#
+# Place this script in /etc/event.d/mmonit. Modify path below to mmonit
+# installation. To manually start and stop M/Monit:
+# 
+# start mmonit
+# stop  mmonit
+#
+
+start on runlevel 2
+start on runlevel 3
+start on runlevel 4
+start on runlevel 5
+
+stop on runlevel 0
+stop on runlevel 6
+
+exec su -l mmonit -c "/usr/local/mmonit/bin/mmonit -i"
+instance
+respawn
+

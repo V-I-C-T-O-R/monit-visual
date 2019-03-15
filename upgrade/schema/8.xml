@@ -1,0 +1,2749 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 7 to 8 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=ON;
+</statement>
+<statement>
+DELETE FROM service WHERE hostid NOT IN (SELECT id FROM host);
+</statement>
+<statement>
+DELETE FROM servicegroup WHERE hostid NOT IN (SELECT id FROM host);
+</statement>
+<statement>
+DELETE FROM groupedservices WHERE servicegroupid NOT IN (SELECT id FROM servicegroup);
+</statement>
+<statement>
+PRAGMA foreign_keys=OFF;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE name_backup (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(255) UNIQUE NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO name_backup (id, name) SELECT id, name FROM name;
+</statement>
+<statement>
+DROP TABLE name;
+</statement>
+<statement>
+CREATE TABLE name (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(255) UNIQUE NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO name SELECT * FROM name_backup;
+</statement>
+<statement>
+DROP TABLE name_backup;
+</statement>
+<statement>
+CREATE INDEX name_name_index ON name(name);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE users_backup (
+  uname VARCHAR(20) PRIMARY KEY,
+  password VARCHAR(56) NOT NULL,
+  fullname VARCHAR(255),
+  title VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(40),
+  mobile VARCHAR(40),
+  imname VARCHAR(255),
+  imtype VARCHAR(20),
+  image BLOB,
+  refresh INTEGER DEFAULT 5000
+);
+</statement>
+<statement>
+INSERT INTO users_backup (uname, password, fullname, title, email, phone, mobile, imname, imtype, refresh) SELECT uname, password, fullname, title, email, phone, mobile, imname, imtype, refresh FROM users;
+</statement>
+<statement>
+DROP TABLE users;
+</statement>
+<statement>
+CREATE TABLE users (
+  uname VARCHAR(20) PRIMARY KEY,
+  password VARCHAR(56) NOT NULL,
+  fullname VARCHAR(255),
+  title VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(40),
+  mobile VARCHAR(40),
+  imname VARCHAR(255),
+  imtype VARCHAR(20),
+  image BLOB,
+  refresh INTEGER DEFAULT 5000
+);
+</statement>
+<statement>
+INSERT INTO users SELECT * FROM users_backup;
+</statement>
+<statement>
+DROP TABLE users_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE userroles_backup (
+  uname VARCHAR(20) NOT NULL,
+  role VARCHAR(20)  NOT NULL,
+  PRIMARY KEY(uname, role)
+);
+</statement>
+<statement>
+INSERT INTO userroles_backup (uname, role) SELECT uname, role FROM userroles;
+</statement>
+<statement>
+DROP TABLE userroles;
+</statement>
+<statement>
+CREATE TABLE userroles (
+  uname VARCHAR(20) NOT NULL,
+  role VARCHAR(20)  NOT NULL,
+  PRIMARY KEY(uname, role),
+  CONSTRAINT userroles_role_fk FOREIGN KEY(role) REFERENCES roles(role) ON DELETE CASCADE,
+  CONSTRAINT userroles_uname_fk FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO userroles SELECT * FROM userroles_backup;
+</statement>
+<statement>
+DROP TABLE userroles_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE host_backup (
+  id INTEGER PRIMARY KEY,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT 3,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0
+);
+</statement>
+<statement>
+INSERT INTO host_backup (id, status, nameid, monitid, ipaddrin, ipaddrout, portin, portout, uname, password, sslin, sslout, description, poll, controlfilenameid, statusmodified, servicemodified, serviceskew, serviceup, servicedown, serviceunmonitorauto, serviceunmonitormanual, version, platformname, platformrelease, platformversion, platformmachine, platformcpu, platformmemory, platformswap, statusheartbeat, eventscount) SELECT id, status, nameid, monitid, ipaddrin, ipaddrout, portin, portout, uname, password, usessl, -1, description, poll, 1, statusmodified, servicemodified, serviceskew, serviceup, servicedown, serviceunmonitorauto, serviceunmonitormanual, version, platformname, platformrelease, platformversion, platformmachine, platformcpu, platformmemory, platformswap, statusheartbeat, eventscount FROM host;
+</statement>
+<statement>
+DROP TABLE host;
+</statement>
+<statement>
+CREATE TABLE host (
+  id INTEGER PRIMARY KEY,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT 3,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  eventscount INTEGER DEFAULT 0,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO host SELECT * FROM host_backup;
+</statement>
+<statement>
+DROP TABLE host_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE hostgroup_backup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO hostgroup_backup (id, nameid) SELECT id, nameid FROM hostgroup;
+</statement>
+<statement>
+DROP TABLE hostgroup;
+</statement>
+<statement>
+CREATE TABLE hostgroup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  CONSTRAINT hostgroup_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO hostgroup SELECT * FROM hostgroup_backup;
+</statement>
+<statement>
+DROP TABLE hostgroup_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE groupedhost_backup (
+  groupid INTEGER NOT NULL,
+  hostid  INTEGER NOT NULL,
+  PRIMARY KEY(groupid, hostid)
+);
+</statement>
+<statement>
+INSERT INTO groupedhost_backup (groupid, hostid) SELECT groupid, hostid FROM groupedhost;
+</statement>
+<statement>
+DROP TABLE groupedhost;
+</statement>
+<statement>
+CREATE TABLE groupedhost (
+  groupid INTEGER NOT NULL,
+  hostid  INTEGER NOT NULL,
+  PRIMARY KEY(groupid, hostid),
+  CONSTRAINT groupedhost_groupid_fk FOREIGN KEY(groupid) REFERENCES hostgroup(id) ON DELETE CASCADE,
+  CONSTRAINT groupedhost_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO groupedhost SELECT * FROM groupedhost_backup;
+</statement>
+<statement>
+DROP TABLE groupedhost_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE service_backup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  status INTEGER NOT NULL,
+  statushint INTEGER NOT NULL,
+  monitoringstate INTEGER NOT NULL,
+  monitoringmode INTEGER NOT NULL,
+  statusmodified INTEGER DEFAULT 0,
+  eventscount INTEGER DEFAULT 0,
+  everytype INTEGER DEFAULT 0,
+  everycyclenumber INTEGER DEFAULT 0,
+  everycyclecounter INTEGER DEFAULT 0,
+  everycron VARCHAR(255)
+);
+</statement>
+<statement>
+INSERT INTO service_backup (id, nameid, hostid, type, status, statushint, monitoringstate, monitoringmode, statusmodified, eventscount) SELECT id, nameid, hostid, type, status, 0, monitoringstate, monitoringmode, statusmodified, eventscount FROM service;
+</statement>
+<statement>
+DROP TABLE service;
+</statement>
+<statement>
+CREATE TABLE service (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  status INTEGER NOT NULL,
+  statushint INTEGER NOT NULL,
+  monitoringstate INTEGER NOT NULL,
+  monitoringmode INTEGER NOT NULL,
+  statusmodified INTEGER DEFAULT 0,
+  eventscount INTEGER DEFAULT 0,
+  everytype INTEGER DEFAULT 0,
+  everycyclenumber INTEGER DEFAULT 0,
+  everycyclecounter INTEGER DEFAULT 0,
+  everycron VARCHAR(255),
+  CONSTRAINT service_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT service_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO service SELECT * FROM service_backup;
+</statement>
+<statement>
+DROP TABLE service_backup;
+</statement>
+<statement>
+CREATE INDEX service_hostid_index ON service(hostid);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE servicegroup_backup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO servicegroup_backup (id, nameid, hostid) SELECT id, nameid, hostid FROM servicegroup;
+</statement>
+<statement>
+DROP TABLE servicegroup;
+</statement>
+<statement>
+CREATE TABLE servicegroup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  CONSTRAINT servicegroup_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT servicegroup_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO servicegroup SELECT * FROM servicegroup_backup;
+</statement>
+<statement>
+DROP TABLE servicegroup_backup;
+</statement>
+<statement>
+CREATE INDEX servicegroup_hostid_index ON service(hostid);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE groupedservices_backup (
+  servicegroupid INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  PRIMARY KEY(servicegroupid, service_nameid)
+);
+</statement>
+<statement>
+INSERT INTO groupedservices_backup (servicegroupid, service_nameid) SELECT servicegroupid, service_nameid FROM groupedservices;
+</statement>
+<statement>
+DROP TABLE groupedservices;
+</statement>
+<statement>
+CREATE TABLE groupedservices (
+  servicegroupid INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  PRIMARY KEY(servicegroupid, service_nameid),
+  CONSTRAINT groupedservices_servicegroupid_fk FOREIGN KEY(servicegroupid) REFERENCES servicegroup(id) ON DELETE CASCADE,
+  CONSTRAINT groupedservices_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO groupedservices SELECT * FROM groupedservices_backup;
+</statement>
+<statement>
+DROP TABLE groupedservices_backup;
+</statement>
+<statement>
+CREATE TABLE statistics (
+  id INTEGER PRIMARY KEY,
+  serviceid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  datatype INTEGER NOT NULL,
+  descriptor VARCHAR(255),
+  CONSTRAINT statistics_serviceid_fk FOREIGN KEY(serviceid) REFERENCES service(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_serviceid_index ON statistics(serviceid);
+</statement>
+<statement>
+CREATE INDEX statistics_type_index ON statistics(type);
+</statement>
+<statement>
+CREATE TABLE statistics_string (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value TEXT,
+  CONSTRAINT statistics_string_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_string_statisticsid_index ON statistics_string(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_int (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value INTEGER,
+  CONSTRAINT statistics_int_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_int_statisticsid_index ON statistics_int(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_llong (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value INTEGER,
+  CONSTRAINT statistics_llong_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_llong_statisticsid_index ON statistics_llong(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_float (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value REAL,
+  CONSTRAINT statistics_float_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_float_statisticsid_index ON statistics_float(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_1m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_1m_statisticsid_index ON statistics_floataggregate_1m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_15m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_15m_statisticsid_index ON statistics_floataggregate_15m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_2h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_2h_statisticsid_index ON statistics_floataggregate_2h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_12h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_12h_statisticsid_index ON statistics_floataggregate_12h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_1d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_1d_statisticsid_index ON statistics_floataggregate_1d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_7d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_7d_statisticsid_index ON statistics_floataggregate_7d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_14d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_14d_statisticsid_index ON statistics_floataggregate_14d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_double (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value REAL,
+  CONSTRAINT statistics_double_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_double_statisticsid_index ON statistics_double(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_1m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_1m_statisticsid_index ON statistics_doubleaggregate_1m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_15m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_15m_statisticsid_index ON statistics_doubleaggregate_15m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_2h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_2h_statisticsid_index ON statistics_doubleaggregate_2h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_12h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_12h_statisticsid_index ON statistics_doubleaggregate_12h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_1d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_1d_statisticsid_index ON statistics_doubleaggregate_1d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_7d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_7d_statisticsid_index ON statistics_doubleaggregate_7d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_doubleaggregate_14d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_14d_statisticsid_index ON statistics_doubleaggregate_14d(statisticsid);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE event_backup (
+  id INTEGER PRIMARY KEY,
+  hostid INTEGER NOT NULL,
+  collectedsec INTEGER NOT NULL,
+  collectedusec INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  servicetype INTEGER NOT NULL,
+  event INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  hasnotice INTEGER,
+  active INTEGER
+);
+</statement>
+<statement>
+INSERT INTO event_backup (id, hostid, collectedsec, collectedusec, service_nameid, servicetype, event, state, action, message, hasnotice) SELECT id, hostid, collectedsec, collectedusec, service_nameid, servicetype, event, state, action, message, hasnotice FROM event;
+</statement>
+<statement>
+DROP TABLE event;
+</statement>
+<statement>
+CREATE TABLE event (
+  id INTEGER PRIMARY KEY,
+  hostid INTEGER NOT NULL,
+  collectedsec INTEGER NOT NULL,
+  collectedusec INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  servicetype INTEGER NOT NULL,
+  event INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  hasnotice INTEGER,
+  active INTEGER,
+  CONSTRAINT event_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT event_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO event SELECT * FROM event_backup;
+</statement>
+<statement>
+DROP TABLE event_backup;
+</statement>
+<statement>
+CREATE INDEX event_hostid_index ON event(hostid);
+</statement>
+<statement>
+CREATE INDEX event_collectedsec_collectedusec_index ON event(collectedsec, collectedusec);
+</statement>
+<statement>
+CREATE INDEX event_service_nameid_index ON event(service_nameid);
+</statement>
+<statement>
+CREATE INDEX event_servicetype_index ON event(servicetype);
+</statement>
+<statement>
+CREATE INDEX event_state_index ON event(state);
+</statement>
+<statement>
+CREATE INDEX event_event_index ON event(event);
+</statement>
+<statement>
+CREATE INDEX event_active_index ON event(active);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE eventnotice_backup (
+  eventid INTEGER NOT NULL,
+  date INTEGER NOT NULL,
+  uname VARCHAR(20) NOT NULL,
+  notice TEXT NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO eventnotice_backup (eventid, date, uname, notice) SELECT eventid, date, uname, notice FROM eventnotice;
+</statement>
+<statement>
+DROP TABLE eventnotice;
+</statement>
+<statement>
+CREATE TABLE eventnotice (
+  eventid INTEGER NOT NULL,
+  date INTEGER NOT NULL,
+  uname VARCHAR(20) NOT NULL,
+  notice TEXT NOT NULL,
+  CONSTRAINT eventnotice_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE,
+  CONSTRAINT eventnotice_uname_fk FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO eventnotice SELECT * FROM eventnotice_backup;
+</statement>
+<statement>
+DROP TABLE eventnotice_backup;
+</statement>
+<statement>
+CREATE INDEX eventnotice_eventid_index ON eventnotice(eventid);
+</statement>
+<statement>
+CREATE TABLE eventfilter (
+  eventid INTEGER,
+  uname VARCHAR(20) NOT NULL,
+  CONSTRAINT eventfilter_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE,
+  CONSTRAINT eventfilter_uname_fk FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX eventfilter_eventid_index ON eventfilter(eventid);
+</statement>
+<statement>
+CREATE INDEX eventfilter_uname_index ON eventfilter(uname);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE mailserver_backup (
+  id INTEGER PRIMARY KEY,
+  hostname VARCHAR(255) NOT NULL,
+  port INTEGER NOT NULL,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  usessl CHAR(1),
+  isdefault CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO mailserver_backup (id, hostname, port, uname, password, usessl, isdefault) SELECT id, hostname, port, uname, password, usessl, isdefault FROM mailserver;
+</statement>
+<statement>
+DROP TABLE mailserver;
+</statement>
+<statement>
+CREATE TABLE mailserver (
+  id INTEGER PRIMARY KEY,
+  hostname VARCHAR(255) NOT NULL,
+  port INTEGER NOT NULL,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  usessl CHAR(1),
+  isdefault CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO mailserver SELECT * FROM mailserver_backup;
+</statement>
+<statement>
+DROP TABLE mailserver_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE jabberserver_backup (
+  id INTEGER PRIMARY KEY,
+  hostname VARCHAR(255) NOT NULL,
+  port INTEGER NOT NULL,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  isdefault CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO jabberserver_backup (id, hostname, port, uname, password, isdefault) SELECT id, hostname, port, uname, password, isdefault FROM jabberserver;
+</statement>
+<statement>
+DROP TABLE jabberserver;
+</statement>
+<statement>
+CREATE TABLE jabberserver (
+  id INTEGER PRIMARY KEY,
+  hostname VARCHAR(255) NOT NULL,
+  port INTEGER NOT NULL,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  isdefault CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO jabberserver SELECT * FROM jabberserver_backup;
+</statement>
+<statement>
+DROP TABLE jabberserver_backup;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE messageformat_backup (
+  sender VARCHAR(255)
+);
+</statement>
+<statement>
+INSERT INTO messageformat_backup (sender) SELECT sender FROM messageformat LIMIT 1;
+</statement>
+<statement>
+DROP TABLE messageformat;
+</statement>
+<statement>
+CREATE TABLE messageformat (
+  id INTEGER PRIMARY KEY,
+  description VARCHAR(255),
+  sender VARCHAR(255),
+  subjectsingle VARCHAR(255),
+  subjectmulti VARCHAR(255),
+  txtheader TEXT,
+  txtbody TEXT,
+  txtfooter TEXT,
+  htmlheader TEXT,
+  htmlbody TEXT,
+  htmlfooter TEXT,
+  contenttype INTEGER,
+  isdefault CHAR(1)
+);
+</statement>
+<statement><![CDATA[
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, txtfooter, htmlheader, htmlbody, htmlfooter, contenttype, isdefault) SELECT
+1,
+"Default",
+sender,
+"M/Monit report ($HOST: $EVENT $SERVICE on $DATE)",
+"M/Monit report ($COUNT events)",
+"Date:        $DATE
+Host:        $HOST
+Service:     $SERVICE
+Action:      $ACTION
+Description: $DESCRIPTION
+
+",
+"
+Your faithful employee,
+M/Monit",
+"<html>
+    <table style='border-collapse:collapse;border:1px solid #eee; padding:5px;'>
+        <tr>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Date</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Host</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Service</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Action</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Description</b></th>
+        </tr>
+",
+"        <tr>
+            <td style='border: 1px solid #eee; padding:5px;'>$DATE</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$HOST</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$SERVICE</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$ACTION</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$DESCRIPTION</td>
+        </tr>
+",
+"    </table>
+    <p>
+        Your faithful employee,<br>
+        M/Monit
+    </p>
+</html>",
+0,
+1 FROM messageformat_backup;
+]]></statement>
+<statement>
+INSERT INTO messageformat (id, description, sender, subjectsingle, txtbody, contenttype, isdefault) SELECT
+2,
+"Test",
+sender,
+"A test message from M/Monit",
+"If you can read this, then I can send you alerts. Your faithful employee, M/Monit",
+1,
+0 FROM messageformat_backup;
+DROP TABLE messageformat_backup;
+</statement>
+<statement>
+DROP TABLE messagerecipients;
+</statement>
+<statement>
+DROP TABLE message;
+</statement>
+<statement>
+CREATE TABLE message (
+  id INTEGER PRIMARY KEY,
+  type INTEGER,
+  contenttype VARCHAR(255),
+  sender VARCHAR(255),
+  subject VARCHAR(255),
+  body TEXT,
+  created INTEGER,
+  retry INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE messagerecipients (
+  messageid INTEGER NOT NULL,
+  recipient VARCHAR(255) NOT NULL,
+  CONSTRAINT messagerecipients_message_fk FOREIGN KEY(messageid) REFERENCES message(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE rule_backup (
+  id INTEGER PRIMARY KEY,
+  description VARCHAR(255),
+  active CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO rule_backup (id, description, active) SELECT id, description, active FROM rule;
+</statement>
+<statement>
+DROP TABLE rule;
+</statement>
+<statement>
+CREATE TABLE rule (
+  id INTEGER PRIMARY KEY,
+  description VARCHAR(255),
+  active CHAR(1)
+);
+</statement>
+<statement>
+INSERT INTO rule SELECT * FROM rule_backup;
+</statement>
+<statement>
+DROP TABLE rule_backup;
+</statement>
+<statement>
+CREATE INDEX rule_active_index ON rule(active);
+</statement>
+<statement>
+CREATE TABLE rulerowhost (
+  rulerowid INTEGER,
+  hostid INTEGER,
+  CONSTRAINT rulerowhost_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowhost_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE rulerowhostgroup (
+  rulerowid INTEGER,
+  hostgroupid INTEGER,
+  CONSTRAINT rulerowhostgroup_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowhostgroup_hostgroupid_fk FOREIGN KEY(hostgroupid) REFERENCES hostgroup(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE rulerowservice (
+  rulerowid INTEGER,
+  service_nameid INTEGER,
+  CONSTRAINT rulerowservice_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowservice_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE rulerowservicegroup (
+  rulerowid INTEGER,
+  servicegroup_nameid INTEGER,
+  CONSTRAINT rulerowservicegroup_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowservicegroup_servicegroup_nameid_fk FOREIGN KEY(servicegroup_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE rulerowstate (
+  rulerowid INTEGER,
+  eventstate INTEGER,
+  CONSTRAINT rulerowstate_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE rulerowevent (
+  rulerowid INTEGER,
+  eventid INTEGER,
+  CONSTRAINT rulerowevent_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO rulerowhost (rulerowid, hostid) SELECT id, hostid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowhostgroup (rulerowid, hostgroupid) SELECT id, hostgroupid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowservice (rulerowid, service_nameid) SELECT id, service_nameid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowservicegroup (rulerowid, servicegroup_nameid) SELECT id, servicegroup_nameid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowstate (rulerowid, eventstate) SELECT id, eventstate FROM rulerow;
+</statement>
+<statement>
+DELETE FROM rulerowhost WHERE hostid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowhostgroup WHERE hostgroupid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowservice WHERE service_nameid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowservicegroup WHERE servicegroup_nameid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowstate WHERE eventstate=-1;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE rulerow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO rulerow_backup (id, ruleid) SELECT DISTINCT id, ruleid FROM rulerow;
+</statement>
+<statement>
+DROP TABLE rulerow;
+</statement>
+<statement>
+CREATE TABLE rulerow (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  CONSTRAINT rulerow_ruleid_fk FOREIGN KEY(ruleid) REFERENCES rule(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO rulerow (id, ruleid) SELECT DISTINCT id, ruleid FROM rulerow_backup;
+</statement>
+<statement>
+DROP TABLE rulerow_backup;
+</statement>
+<statement>
+CREATE TABLE actionrowtarget (
+  actionrowid INTEGER NOT NULL,
+  target TEXT NOT NULL,
+  CONSTRAINT actionrowtarget_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE actionrowoption (
+  actionrowid INTEGER NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  value TEXT,
+  CONSTRAINT actionrowoption_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO actionrowtarget (actionrowid, target) SELECT id, target FROM actionrow;
+</statement>
+<statement>
+INSERT INTO actionrowoption (actionrowid, name, value) SELECT id, 'environment', targetoption FROM actionrow;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE actionrow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT -300
+);
+</statement>
+<statement>
+INSERT INTO actionrow_backup (id, ruleid, action) SELECT DISTINCT id, ruleid, selectedtarget FROM actionrow;
+</statement>
+<statement>
+DROP TABLE actionrow;
+</statement>
+<statement>
+CREATE TABLE actionrow (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT -300,
+  CONSTRAINT actionrow_ruleid_fk FOREIGN KEY(ruleid) REFERENCES rule(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+INSERT INTO actionrow (id, ruleid, action) SELECT DISTINCT id, ruleid, action FROM actionrow_backup;
+</statement>
+<statement>
+DROP TABLE actionrow_backup;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN welcome INTEGER;
+</statement>
+<statement>
+UPDATE mmonit SET welcome=1;
+</statement>
+<statement>
+DELETE FROM session;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+ALTER TABLE actionrow DROP FOREIGN KEY actionrow_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE event DROP FOREIGN KEY event_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE event DROP FOREIGN KEY event_ibfk_2;
+</statement>
+<statement>
+ALTER TABLE eventnotice DROP FOREIGN KEY eventnotice_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE eventnotice DROP FOREIGN KEY eventnotice_ibfk_2;
+</statement>
+<statement>
+ALTER TABLE groupedhost DROP FOREIGN KEY groupedhost_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE groupedhost DROP FOREIGN KEY groupedhost_ibfk_2;
+</statement>
+<statement>
+ALTER TABLE groupedservices DROP FOREIGN KEY groupedservices_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE groupedservices DROP FOREIGN KEY groupedservices_ibfk_2;
+</statement>
+<statement>
+ALTER TABLE host DROP FOREIGN KEY host_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE hostgroup DROP FOREIGN KEY hostgroup_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE messagerecipients DROP FOREIGN KEY messagerecipients_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP FOREIGN KEY rulerow_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE service DROP FOREIGN KEY service_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE servicegroup DROP FOREIGN KEY servicegroup_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE userroles DROP FOREIGN KEY userroles_ibfk_1;
+</statement>
+<statement>
+ALTER TABLE userroles DROP FOREIGN KEY userroles_ibfk_2;
+</statement>
+<statement>
+DELETE FROM service WHERE hostid NOT IN (SELECT id FROM host);
+</statement>
+<statement>
+DELETE FROM servicegroup WHERE hostid NOT IN (SELECT id FROM host);
+</statement>
+<statement>
+DELETE FROM groupedservices WHERE servicegroupid NOT IN (SELECT id FROM servicegroup);
+</statement>
+<statement>
+ALTER TABLE name MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE name ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+DROP INDEX name_index ON name;
+</statement>
+<statement>
+CREATE INDEX name_name_index ON name (name);
+</statement>
+<statement>
+ALTER TABLE users ADD COLUMN image BLOB AFTER imtype;
+</statement>
+<statement>
+ALTER TABLE host MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE host ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN startdelay INTEGER DEFAULT 0 AFTER poll;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN controlfilenameid INTEGER NOT NULL AFTER startdelay;
+</statement>
+<statement>
+UPDATE host SET controlfilenameid=1;
+</statement>
+<statement>
+ALTER TABLE host CHANGE usessl sslin TINYINT;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN sslout TINYINT DEFAULT -1 AFTER sslin;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cpuuser;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cpusystem;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cpuwait;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cputotal;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN memory;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN swap;
+</statement>
+<statement>
+ALTER TABLE hostgroup MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE hostgroup ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE hostgroup DROP KEY nameid;
+</statement>
+<statement>
+ALTER TABLE hostgroup MODIFY COLUMN nameid INTEGER NOT NULL;
+</statement>
+<statement>
+ALTER TABLE hostgroup ALTER COLUMN nameid DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE hostgroup DROP COLUMN description;
+</statement>
+<statement>
+ALTER TABLE service MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE service ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN statushint INTEGER NOT NULL AFTER status;
+</statement>
+<statement>
+UPDATE service SET statushint=0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everytype INTEGER DEFAULT 0 AFTER eventscount;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everycyclenumber INTEGER DEFAULT 0 AFTER everytype;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everycyclecounter INTEGER DEFAULT 0 AFTER everycyclenumber;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everycron VARCHAR(255) AFTER everycyclecounter;
+</statement>
+<statement>
+CREATE INDEX service_hostid_index ON service (hostid);
+</statement>
+<statement>
+ALTER TABLE servicegroup MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE servicegroup ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+CREATE INDEX servicegroup_hostid_index ON servicegroup (hostid);
+</statement>
+<statement>
+CREATE TABLE statistics (
+  id INTEGER PRIMARY KEY,
+  serviceid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  datatype INTEGER NOT NULL,
+  descriptor VARCHAR(255),
+  INDEX statistics_serviceid_index (serviceid),
+  INDEX statistics_type_index (type),
+  CONSTRAINT statistics_serviceid_fk FOREIGN KEY (serviceid) REFERENCES service(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_string (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value TEXT,
+  INDEX statistics_string_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_string_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE TABLE statistics_int (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value INTEGER,
+  INDEX statistics_int_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_int_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_llong (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value BIGINT,
+  INDEX statistics_llong_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_llong_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_float (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value FLOAT,
+  INDEX statistics_float_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_float_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_1m_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_1m_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_15m_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_15m_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_2h_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_2h_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_12h_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_12h_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_1d_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_1d_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_7d_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_7d_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg FLOAT,
+  INDEX statistics_floataggregate_14d_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_floataggregate_14d_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_double (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value DOUBLE PRECISION,
+  INDEX statistics_double_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_double_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_1m_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_1m_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_15m_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_15m_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_2h_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_2h_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_12h_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_12h_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_1d_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_1d_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_7d_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_7d_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  INDEX statistics_doubleaggregate_14d_statisticsid_index (statisticsid),
+  CONSTRAINT statistics_doubleaggregate_14d_statisticsid_fk FOREIGN KEY (statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+ALTER TABLE event MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE event ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE event ADD COLUMN active INTEGER AFTER hasnotice;
+</statement>
+<statement>
+DROP INDEX hostid_index ON event;
+</statement>
+<statement>
+DROP INDEX collectedsec_index ON event;
+</statement>
+<statement>
+DROP INDEX service_nameid_index ON event;
+</statement>
+<statement>
+DROP INDEX servicetype_index ON event;
+</statement>
+<statement>
+DROP INDEX state_index ON event;
+</statement>
+<statement>
+CREATE INDEX event_hostid_index ON event (hostid);
+</statement>
+<statement>
+CREATE INDEX event_collectedsec_collectedusec_index ON event (collectedsec, collectedusec);
+</statement>
+<statement>
+CREATE INDEX event_service_nameid_index ON event (service_nameid);
+</statement>
+<statement>
+CREATE INDEX event_servicetype_index ON event (servicetype);
+</statement>
+<statement>
+CREATE INDEX event_state_index ON event (state);
+</statement>
+<statement>
+CREATE INDEX event_event_index ON event (event);
+</statement>
+<statement>
+CREATE INDEX event_active_index ON event (active);
+</statement>
+<statement>
+DROP INDEX eventid_index ON eventnotice;
+</statement>
+<statement>
+CREATE INDEX eventnotice_eventid_index ON eventnotice (eventid);
+</statement>
+<statement>
+CREATE TABLE eventfilter (
+  eventid INTEGER,
+  uname VARCHAR(20) NOT NULL,
+  INDEX eventfilter_eventid_index (eventid),
+  INDEX eventfilter_uname_index (uname),
+  CONSTRAINT eventfilter_eventid_fk FOREIGN KEY (eventid) REFERENCES event (id) ON DELETE CASCADE,
+  CONSTRAINT eventfilter_uname_fk FOREIGN KEY (uname) REFERENCES users (uname) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+ALTER TABLE mailserver MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE mailserver ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE jabberserver MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE jabberserver ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE messageformat_backup (
+  sender VARCHAR(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+INSERT INTO messageformat_backup (sender) SELECT sender FROM messageformat LIMIT 1;
+</statement>
+<statement>
+DROP TABLE messageformat;
+</statement>
+<statement>
+CREATE TABLE messageformat (
+  id INTEGER PRIMARY KEY,
+  description VARCHAR(255),
+  sender VARCHAR(255),
+  subjectsingle VARCHAR(255),
+  subjectmulti VARCHAR(255),
+  txtheader TEXT,
+  txtbody TEXT,
+  txtfooter TEXT,
+  htmlheader TEXT,
+  htmlbody TEXT,
+  htmlfooter TEXT,
+  contenttype INTEGER DEFAULT 0,
+  isdefault CHAR(1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement><![CDATA[
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, txtfooter, htmlheader, htmlbody, htmlfooter, contenttype, isdefault) SELECT
+1,
+"Default",
+sender,
+"M/Monit report ($HOST: $EVENT $SERVICE on $DATE)",
+"M/Monit report ($COUNT events)",
+"Date:        $DATE
+Host:        $HOST
+Service:     $SERVICE
+Action:      $ACTION
+Description: $DESCRIPTION
+
+",
+"
+Your faithful employee,
+M/Monit",
+"<html>
+    <table style='border-collapse:collapse;border:1px solid #eee; padding:5px;'>
+        <tr>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Date</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Host</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Service</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Action</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Description</b></th>
+        </tr>
+",
+"        <tr>
+            <td style='border: 1px solid #eee; padding:5px;'>$DATE</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$HOST</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$SERVICE</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$ACTION</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$DESCRIPTION</td>
+        </tr>
+",
+"    </table>
+    <p>
+        Your faithful employee,<br>
+        M/Monit
+    </p>
+</html>",
+0,
+1 FROM messageformat_backup;
+]]></statement>
+<statement>
+INSERT INTO messageformat (id, description, sender, subjectsingle, txtbody, contenttype, isdefault) SELECT
+2,
+"Test",
+sender,
+"A test message from M/Monit",
+"If you can read this, then I can send you alerts. Your faithful employee, M/Monit",
+1,
+0 FROM messageformat_backup;
+</statement>
+<statement>
+DROP TABLE messageformat_backup;
+</statement>
+<statement>
+DROP TABLE messagerecipients;
+</statement>
+<statement>
+DROP TABLE message;
+</statement>
+<statement>
+CREATE TABLE message (
+  id INTEGER PRIMARY KEY,
+  type INTEGER,
+  contenttype VARCHAR(255),
+  sender VARCHAR(255),
+  subject VARCHAR(255),
+  body TEXT,
+  created INTEGER,
+  retry INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE messagerecipients (
+  messageid INTEGER NOT NULL,
+  recipient VARCHAR(255) NOT NULL,
+  CONSTRAINT messagerecipients_message_fk FOREIGN KEY (messageid) REFERENCES message (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+ALTER TABLE rule MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE rule ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE rule DROP COLUMN operator;
+</statement>
+<statement>
+DROP INDEX active_index ON rule;
+</statement>
+<statement>
+CREATE INDEX rule_active_index ON rule (active);
+</statement>
+<statement>
+CREATE TABLE rulerowhost (
+  rulerowid INTEGER,
+  hostid INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE rulerowhostgroup (
+  rulerowid INTEGER,
+  hostgroupid INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE rulerowservice (
+  rulerowid INTEGER,
+  service_nameid INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE rulerowservicegroup (
+  rulerowid INTEGER,
+  servicegroup_nameid INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE rulerowstate (
+  rulerowid INTEGER,
+  eventstate INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE rulerowevent (
+  rulerowid INTEGER,
+  eventid INTEGER
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+INSERT INTO rulerowhost (rulerowid, hostid) SELECT id, hostid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowhostgroup (rulerowid, hostgroupid) SELECT id, hostgroupid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowservice (rulerowid, service_nameid) SELECT id, service_nameid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowservicegroup (rulerowid, servicegroup_nameid) SELECT id, servicegroup_nameid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowstate (rulerowid, eventstate) SELECT id, eventstate FROM rulerow;
+</statement>
+<statement>
+DELETE FROM rulerowhost WHERE hostid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowhostgroup WHERE hostgroupid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowservice WHERE service_nameid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowservicegroup WHERE servicegroup_nameid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowstate WHERE eventstate=-1;
+</statement>
+<statement>
+ALTER TABLE rulerow MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE rulerow ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN hostid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN hostgroupid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN service_nameid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN servicegroup_nameid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN eventstate;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE rulerow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+INSERT INTO rulerow_backup (id, ruleid) SELECT DISTINCT id, ruleid FROM rulerow;
+</statement>
+<statement>
+DELETE FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerow (id, ruleid) SELECT DISTINCT id, ruleid FROM rulerow_backup;
+</statement>
+<statement>
+DROP TABLE rulerow_backup;
+</statement>
+<statement>
+CREATE TABLE actionrowtarget (
+  actionrowid INTEGER NOT NULL,
+  target TEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+CREATE TABLE actionrowoption (
+  actionrowid INTEGER NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  value TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+INSERT INTO actionrowtarget (actionrowid, target) SELECT id, target FROM actionrow;
+</statement>
+<statement>
+INSERT INTO actionrowoption (actionrowid, name, value) SELECT id, 'environment', targetoption FROM actionrow;
+</statement>
+<statement>
+ALTER TABLE actionrow MODIFY COLUMN id INTEGER;
+</statement>
+<statement>
+ALTER TABLE actionrow ALTER COLUMN id DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE actionrow CHANGE COLUMN selectedtarget action INTEGER NOT NULL;
+</statement>
+<statement>
+ALTER TABLE actionrow ADD COLUMN repetition INTEGER DEFAULT -300 AFTER action;
+</statement>
+<statement>
+ALTER TABLE actionrow DROP COLUMN target;
+</statement>
+<statement>
+ALTER TABLE actionrow DROP COLUMN targetoption;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE actionrow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT -300
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+<statement>
+INSERT INTO actionrow_backup (id, ruleid, action) SELECT DISTINCT id, ruleid, action FROM actionrow;
+</statement>
+<statement>
+DELETE FROM actionrow;
+</statement>
+<statement>
+INSERT INTO actionrow (id, ruleid, action) SELECT DISTINCT id, ruleid, action FROM actionrow_backup;
+</statement>
+<statement>
+DROP TABLE actionrow_backup;
+</statement>
+<statement>
+ALTER TABLE host ADD CONSTRAINT host_controlfilenameid_fk FOREIGN KEY (controlfilenameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE host ADD CONSTRAINT host_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE hostgroup ADD CONSTRAINT hostgroup_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedhost ADD CONSTRAINT groupedhost_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedhost ADD CONSTRAINT groupedhost_groupid_fk FOREIGN KEY (groupid) REFERENCES hostgroup (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE service ADD CONSTRAINT service_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE service ADD CONSTRAINT service_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE servicegroup ADD CONSTRAINT servicegroup_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE servicegroup ADD CONSTRAINT servicegroup_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedservices ADD CONSTRAINT groupedservices_service_nameid_fk FOREIGN KEY (service_nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedservices ADD CONSTRAINT groupedservices_servicegroupid_fk FOREIGN KEY (servicegroupid) REFERENCES servicegroup (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE event ADD CONSTRAINT event_service_nameid_fk FOREIGN KEY (service_nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE event ADD CONSTRAINT event_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE eventnotice ADD CONSTRAINT eventnotice_uname_fk FOREIGN KEY (uname) REFERENCES users (uname) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE eventnotice ADD CONSTRAINT eventnotice_eventid_fk FOREIGN KEY (eventid) REFERENCES event (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE userroles ADD CONSTRAINT userroles_uname_fk FOREIGN KEY (uname) REFERENCES users (uname) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE userroles ADD CONSTRAINT userroles_role_fk FOREIGN KEY (role) REFERENCES roles (role) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerow ADD CONSTRAINT rulerow_ruleid_fk FOREIGN KEY (ruleid) REFERENCES rule (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhost ADD CONSTRAINT rulerowhost_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhost ADD CONSTRAINT rulerowhost_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhostgroup ADD CONSTRAINT rulerowhostgroup_hostgroupid_fk FOREIGN KEY (hostgroupid) REFERENCES hostgroup (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhostgroup ADD CONSTRAINT rulerowhostgroup_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservice ADD CONSTRAINT rulerowservice_service_nameid_fk FOREIGN KEY (service_nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservice ADD CONSTRAINT rulerowservice_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservicegroup ADD CONSTRAINT rulerowservicegroup_servicegroup_nameid_fk FOREIGN KEY (servicegroup_nameid) REFERENCES name (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservicegroup ADD CONSTRAINT rulerowservicegroup_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowstate ADD CONSTRAINT rulerowstate_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowevent ADD CONSTRAINT rulerowevent_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE actionrow ADD CONSTRAINT actionrow_ruleid_fk FOREIGN KEY (ruleid) REFERENCES rule (id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE actionrowtarget ADD CONSTRAINT actionrowtarget_actionrowid_fk FOREIGN KEY (actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE actionrowoption ADD CONSTRAINT actionrowoption_actionrowid_fk FOREIGN KEY (actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN welcome TINYINT AFTER schemaversion;
+</statement>
+<statement>
+UPDATE mmonit SET welcome=1;
+</statement>
+<statement>
+DELETE FROM session;
+</statement>
+
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+DELETE FROM service WHERE hostid NOT IN (SELECT id FROM host);
+</statement>
+<statement>
+DELETE FROM servicegroup WHERE hostid NOT IN (SELECT id FROM host);
+</statement>
+<statement>
+DELETE FROM groupedservices WHERE servicegroupid NOT IN (SELECT id FROM servicegroup);
+</statement>
+<statement>
+DROP SEQUENCE name_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE host_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE hostgroup_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE groupedhost_groupid_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE servicegroup_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE service_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE actionrow_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE event_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE jabberserver_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE mailserver_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE rule_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE rulerow_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE messageformat_id_seq CASCADE;
+</statement>
+<statement>
+DROP SEQUENCE message_id_seq CASCADE;
+</statement>
+<statement>
+ALTER TABLE userroles DROP CONSTRAINT role_fk;
+</statement>
+<statement>
+ALTER TABLE userroles DROP CONSTRAINT uname_fk;
+</statement>
+<statement>
+ALTER TABLE host DROP CONSTRAINT nameid_fk;
+</statement>
+<statement>
+ALTER TABLE hostgroup DROP CONSTRAINT nameid_fk;
+</statement>
+<statement>
+ALTER TABLE hostgroup DROP CONSTRAINT hostgroup_nameid_unique;
+</statement>
+<statement>
+ALTER TABLE groupedhost DROP CONSTRAINT groupid_fk;
+</statement>
+<statement>
+ALTER TABLE groupedhost DROP CONSTRAINT hostid_fk;
+</statement>
+<statement>
+ALTER TABLE service DROP CONSTRAINT nameid_fk;
+</statement>
+<statement>
+ALTER TABLE servicegroup DROP CONSTRAINT nameid_fk;
+</statement>
+<statement>
+ALTER TABLE groupedservices DROP CONSTRAINT servicegroupid_fk;
+</statement>
+<statement>
+ALTER TABLE groupedservices DROP CONSTRAINT service_nameid_fk;
+</statement>
+<statement>
+ALTER TABLE event DROP CONSTRAINT hostid_fk;
+</statement>
+<statement>
+ALTER TABLE event DROP CONSTRAINT service_nameid_fk;
+</statement>
+<statement>
+ALTER TABLE eventnotice DROP CONSTRAINT eventid_fk;
+</statement>
+<statement>
+ALTER TABLE eventnotice DROP CONSTRAINT uname_fk;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP CONSTRAINT ruleid_fk;
+</statement>
+<statement>
+ALTER TABLE actionrow DROP CONSTRAINT ruleid_fk;
+</statement>
+<statement>
+ALTER TABLE messagerecipients DROP CONSTRAINT message_fk;
+</statement>
+<statement>
+DROP INDEX name_index;
+</statement>
+<statement>
+CREATE INDEX name_name_index ON name (name);
+</statement>
+<statement>
+ALTER TABLE users ADD COLUMN image BYTEA;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN startdelay INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN controlfilenameid INTEGER NOT NULL DEFAULT 1;
+</statement>
+<statement>
+UPDATE host SET controlfilenameid=1;
+</statement>
+<statement>
+ALTER TABLE host ALTER COLUMN controlfilenameid DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE host RENAME COLUMN usessl TO sslin;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN sslout SMALLINT DEFAULT -1;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cpuuser;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cpusystem;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cpuwait;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN cputotal;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN memory;
+</statement>
+<statement>
+ALTER TABLE host DROP COLUMN swap;
+</statement>
+<statement>
+ALTER TABLE hostgroup DROP COLUMN description;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN statushint INTEGER NOT NULL DEFAULT 0;
+</statement>
+<statement>
+UPDATE service SET statushint=0;
+</statement>
+<statement>
+ALTER TABLE service ALTER COLUMN statushint DROP DEFAULT;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everytype INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everycyclenumber INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everycyclecounter INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN everycron CHARACTER VARYING(255);
+</statement>
+<statement>
+CREATE INDEX service_hostid_index ON service (hostid);
+</statement>
+<statement>
+CREATE INDEX servicegroup_hostid_index ON servicegroup (hostid);
+</statement>
+<statement>
+CREATE TABLE statistics (
+  id INTEGER PRIMARY KEY,
+  serviceid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  datatype INTEGER NOT NULL,
+  descriptor CHARACTER VARYING(255),
+  CONSTRAINT statistics_serviceid_fk FOREIGN KEY(serviceid) REFERENCES service(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_serviceid_index ON statistics(serviceid);
+</statement>
+<statement>
+CREATE INDEX statistics_type_index ON statistics(type);
+</statement>
+<statement>
+CREATE TABLE statistics_string (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value TEXT,
+  FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_string_statisticsid_index ON statistics_string(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_int (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value INTEGER,
+  CONSTRAINT statistics_int_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_int_statisticsid_index ON statistics_int(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_llong (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value BIGINT,
+  CONSTRAINT statistics_llong_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_llong_statisticsid_index ON statistics_llong(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_float (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value REAL,
+  CONSTRAINT statistics_float_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_float_statisticsid_index ON statistics_float(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_1m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_1m_statisticsid_index ON statistics_floataggregate_1m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_15m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_15m_statisticsid_index ON statistics_floataggregate_15m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_2h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_2h_statisticsid_index ON statistics_floataggregate_2h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_12h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_12h_statisticsid_index ON statistics_floataggregate_12h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_1d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_1d_statisticsid_index ON statistics_floataggregate_1d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_7d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_7d_statisticsid_index ON statistics_floataggregate_7d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_floataggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_floataggregate_14d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_floataggregate_14d_statisticsid_index ON statistics_floataggregate_14d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_double (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value DOUBLE PRECISION,
+  CONSTRAINT statistics_double_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_double_statisticsid_index ON statistics_double(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_1m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_1m_statisticsid_index ON statistics_doubleaggregate_1m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_15m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_15m_statisticsid_index ON statistics_doubleaggregate_15m(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_2h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_2h_statisticsid_index ON statistics_doubleaggregate_2h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_12h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_12h_statisticsid_index ON statistics_doubleaggregate_12h(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_1d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_1d_statisticsid_index ON statistics_doubleaggregate_1d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_7d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_7d_statisticsid_index ON statistics_doubleaggregate_7d(statisticsid);
+</statement>
+<statement>
+CREATE TABLE statistics_doubleaggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg DOUBLE PRECISION,
+  CONSTRAINT statistics_doubleaggregate_14d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX statistics_doubleaggregate_14d_statisticsid_index ON statistics_doubleaggregate_14d(statisticsid);
+</statement>
+<statement>
+ALTER TABLE event ALTER COLUMN id TYPE INTEGER;
+</statement>
+<statement>
+ALTER TABLE event ADD COLUMN active INTEGER;
+</statement>
+<statement>
+DROP INDEX hostid_index;
+</statement>
+<statement>
+DROP INDEX collectedsec_index;
+</statement>
+<statement>
+DROP INDEX service_nameid_index;
+</statement>
+<statement>
+DROP INDEX servicetype_index;
+</statement>
+<statement>
+DROP INDEX state_index;
+</statement>
+<statement>
+CREATE INDEX event_hostid_index ON event (hostid);
+</statement>
+<statement>
+CREATE INDEX event_collectedsec_collectedusec_index ON event (collectedsec, collectedusec);
+</statement>
+<statement>
+CREATE INDEX event_service_nameid_index ON event (service_nameid);
+</statement>
+<statement>
+CREATE INDEX event_servicetype_index ON event (servicetype);
+</statement>
+<statement>
+CREATE INDEX event_state_index ON event (state);
+</statement>
+<statement>
+CREATE INDEX event_event_index ON event (event);
+</statement>
+<statement>
+CREATE INDEX event_active_index ON event (active);
+</statement>
+<statement>
+DROP INDEX eventid_index;
+</statement>
+<statement>
+CREATE INDEX eventnotice_eventid_index ON eventnotice (eventid);
+</statement>
+<statement>
+CREATE TABLE eventfilter (
+  eventid INTEGER,
+  uname VARCHAR(20) NOT NULL,
+  FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE,
+  FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+</statement>
+<statement>
+CREATE INDEX eventfilter_eventid_index ON eventfilter(eventid);
+</statement>
+<statement>
+CREATE INDEX eventfilter_uname_index ON eventfilter(uname);
+</statement>
+<statement>
+CREATE TEMPORARY TABLE messageformat_backup (
+  sender CHARACTER VARYING(255)
+);
+</statement>
+<statement>
+INSERT INTO messageformat_backup (sender) SELECT sender FROM messageformat LIMIT 1;
+</statement>
+<statement>
+DROP TABLE messageformat;
+</statement>
+<statement>
+CREATE TABLE messageformat (
+  id INTEGER PRIMARY KEY,
+  description CHARACTER VARYING(255),
+  sender CHARACTER VARYING(255),
+  subjectsingle CHARACTER VARYING(255),
+  subjectmulti CHARACTER VARYING(255),
+  txtheader TEXT,
+  txtbody TEXT,
+  txtfooter TEXT,
+  htmlheader TEXT,
+  htmlbody TEXT,
+  htmlfooter TEXT,
+  contenttype SMALLINT,
+  isdefault SMALLINT
+);
+</statement>
+<statement><![CDATA[
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, txtfooter, htmlheader, htmlbody, htmlfooter, contenttype, isdefault) SELECT
+1,
+'Default',
+sender,
+'M/Monit report ($HOST: $EVENT $SERVICE on $DATE)',
+'M/Monit report ($COUNT events)',
+'Date:        $DATE
+Host:        $HOST
+Service:     $SERVICE
+Action:      $ACTION
+Description: $DESCRIPTION
+
+',
+'
+Your faithful employee,
+M/Monit',
+'<html>
+    <table style="border-collapse:collapse;border:1px solid #eee; padding:5px;">
+        <tr>
+            <th style="border: 1px solid #eee; padding:5px;"><b>Date</b></th>
+            <th style="border: 1px solid #eee; padding:5px;"><b>Host</b></th>
+            <th style="border: 1px solid #eee; padding:5px;"><b>Service</b></th>
+            <th style="border: 1px solid #eee; padding:5px;"><b>Action</b></th>
+            <th style="border: 1px solid #eee; padding:5px;"><b>Description</b></th>
+        </tr>
+',
+'        <tr>
+            <td style="border: 1px solid #eee; padding:5px;">$DATE</td>
+            <td style="border: 1px solid #eee; padding:5px;">$HOST</td>
+            <td style="border: 1px solid #eee; padding:5px;">$SERVICE</td>
+            <td style="border: 1px solid #eee; padding:5px;">$ACTION</td>
+            <td style="border: 1px solid #eee; padding:5px;">$DESCRIPTION</td>
+        </tr>
+',
+'    </table>
+    <p>
+        Your faithful employee,<br>
+        M/Monit
+    </p>
+</html>',
+0,
+1 FROM messageformat_backup;
+]]></statement>
+<statement>
+INSERT INTO messageformat (id, description, sender, subjectsingle, txtbody, contenttype, isdefault) SELECT
+2,
+'Test',
+sender,
+'A test message from M/Monit',
+'If you can read this, then I can send you alerts. Your faithful employee, M/Monit',
+1,
+0 FROM messageformat_backup;
+</statement>
+<statement>
+DROP TABLE messageformat_backup;
+</statement>
+<statement>
+DROP TABLE messagerecipients;
+</statement>
+<statement>
+DROP TABLE message;
+</statement>
+<statement>
+CREATE TABLE message (
+  id INTEGER PRIMARY KEY,
+  type INTEGER,
+  contenttype CHARACTER VARYING(255),
+  sender CHARACTER VARYING(255),
+  subject CHARACTER VARYING(255),
+  body TEXT,
+  created INTEGER,
+  retry INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE messagerecipients (
+  messageid INTEGER NOT NULL,
+  recipient CHARACTER VARYING(255) NOT NULL,
+  CONSTRAINT messagerecipients_message_fk FOREIGN KEY(messageid) REFERENCES message(id) MATCH FULL ON DELETE CASCADE
+);
+</statement>
+<statement>
+ALTER TABLE rule DROP COLUMN operator;
+</statement>
+<statement>
+DROP INDEX active_index;
+</statement>
+<statement>
+CREATE INDEX rule_active_index ON rule (active);
+</statement>
+<statement>
+CREATE TABLE rulerowhost (
+  rulerowid INTEGER,
+  hostid INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE rulerowhostgroup (
+  rulerowid INTEGER,
+  hostgroupid INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE rulerowservice (
+  rulerowid INTEGER,
+  service_nameid INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE rulerowservicegroup (
+  rulerowid INTEGER,
+  servicegroup_nameid INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE rulerowstate (
+  rulerowid INTEGER,
+  eventstate INTEGER
+);
+</statement>
+<statement>
+CREATE TABLE rulerowevent (
+  rulerowid INTEGER,
+  eventid INTEGER
+);
+</statement>
+<statement>
+INSERT INTO rulerowhost (rulerowid, hostid) SELECT id, hostid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowhostgroup (rulerowid, hostgroupid) SELECT id, hostgroupid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowservice (rulerowid, service_nameid) SELECT id, service_nameid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowservicegroup (rulerowid, servicegroup_nameid) SELECT id, servicegroup_nameid FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerowstate (rulerowid, eventstate) SELECT id, eventstate FROM rulerow;
+</statement>
+<statement>
+DELETE FROM rulerowhost WHERE hostid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowhostgroup WHERE hostgroupid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowservice WHERE service_nameid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowservicegroup WHERE servicegroup_nameid=-1;
+</statement>
+<statement>
+DELETE FROM rulerowstate WHERE eventstate=-1;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN hostid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN hostgroupid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN service_nameid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN servicegroup_nameid;
+</statement>
+<statement>
+ALTER TABLE rulerow DROP COLUMN eventstate;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE rulerow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL
+);
+</statement>
+<statement>
+INSERT INTO rulerow_backup (id, ruleid) SELECT DISTINCT id, ruleid FROM rulerow;
+</statement>
+<statement>
+DELETE FROM rulerow;
+</statement>
+<statement>
+INSERT INTO rulerow (id, ruleid) SELECT DISTINCT id, ruleid FROM rulerow_backup;
+</statement>
+<statement>
+DROP TABLE rulerow_backup;
+</statement>
+<statement>
+CREATE TABLE actionrowtarget (
+  actionrowid INTEGER NOT NULL,
+  target TEXT NOT NULL
+);
+</statement>
+<statement>
+CREATE TABLE actionrowoption (
+  actionrowid INTEGER NOT NULL,
+  name CHARACTER VARYING(255) NOT NULL,
+  value TEXT
+);
+</statement>
+<statement>
+INSERT INTO actionrowtarget (actionrowid, target) SELECT id, target FROM actionrow;
+</statement>
+<statement>
+INSERT INTO actionrowoption (actionrowid, name, value) SELECT id, 'environment', targetoption FROM actionrow;
+</statement>
+<statement>
+ALTER TABLE actionrow RENAME COLUMN selectedtarget TO action;
+</statement>
+<statement>
+ALTER TABLE actionrow ADD COLUMN repetition INTEGER DEFAULT -300;
+</statement>
+<statement>
+ALTER TABLE actionrow DROP COLUMN target;
+</statement>
+<statement>
+ALTER TABLE actionrow DROP COLUMN targetoption;
+</statement>
+<statement>
+CREATE TEMPORARY TABLE actionrow_backup (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT -300
+);
+</statement>
+<statement>
+INSERT INTO actionrow_backup (id, ruleid, action) SELECT DISTINCT id, ruleid, action FROM actionrow;
+</statement>
+<statement>
+DELETE FROM actionrow;
+</statement>
+<statement>
+INSERT INTO actionrow (id, ruleid, action) SELECT DISTINCT id, ruleid, action FROM actionrow_backup;
+</statement>
+<statement>
+DROP TABLE actionrow_backup;
+</statement>
+<statement>
+ALTER TABLE host ADD CONSTRAINT host_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE host ADD CONSTRAINT host_controlfilenameid_fk FOREIGN KEY (controlfilenameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE hostgroup ADD CONSTRAINT hostgroup_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedhost ADD CONSTRAINT groupedhost_groupid_fk FOREIGN KEY (groupid) REFERENCES hostgroup (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedhost ADD CONSTRAINT groupedhost_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE service ADD CONSTRAINT service_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE service ADD CONSTRAINT service_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE servicegroup ADD CONSTRAINT servicegroup_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE servicegroup ADD CONSTRAINT servicegroup_nameid_fk FOREIGN KEY (nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedservices ADD CONSTRAINT groupedservices_servicegroupid_fk FOREIGN KEY (servicegroupid) REFERENCES servicegroup (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE groupedservices ADD CONSTRAINT groupedservices_service_nameid_fk FOREIGN KEY (service_nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE event ADD CONSTRAINT event_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE event ADD CONSTRAINT event_service_nameid_fk FOREIGN KEY (service_nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE eventnotice ADD CONSTRAINT eventnotice_eventid_fk FOREIGN KEY (eventid) REFERENCES event (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE eventnotice ADD CONSTRAINT eventnotice_uname_fk FOREIGN KEY (uname) REFERENCES users (uname) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE userroles ADD CONSTRAINT userroles_role_fk FOREIGN KEY (role) REFERENCES roles (role) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE userroles ADD CONSTRAINT userroles_uname_fk FOREIGN KEY (uname) REFERENCES users (uname) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerow ADD CONSTRAINT rulerow_ruleid_fk FOREIGN KEY (ruleid) REFERENCES rule (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhost ADD CONSTRAINT rulerowhost_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhost ADD CONSTRAINT rulerowhost_hostid_fk FOREIGN KEY (hostid) REFERENCES host (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhostgroup ADD CONSTRAINT rulerowhostgroup_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowhostgroup ADD CONSTRAINT rulerowhostgroup_hostgroupid_fk FOREIGN KEY (hostgroupid) REFERENCES hostgroup (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservice ADD CONSTRAINT rulerowservice_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservice ADD CONSTRAINT rulerowservice_service_nameid_fk FOREIGN KEY (service_nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservicegroup ADD CONSTRAINT rulerowservicegroup_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowservicegroup ADD CONSTRAINT rulerowservicegroup_servicegroup_nameid_fk FOREIGN KEY (servicegroup_nameid) REFERENCES name (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowstate ADD CONSTRAINT rulerowstate_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE rulerowevent ADD CONSTRAINT rulerowevent_rulerowid_fk FOREIGN KEY (rulerowid) REFERENCES rulerow (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE actionrow ADD CONSTRAINT actionrow_ruleid_fk FOREIGN KEY (ruleid) REFERENCES rule (id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE actionrowtarget ADD CONSTRAINT actionrowtarget_actionrowid_fk FOREIGN KEY (actionrowid) REFERENCES actionrow(id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE actionrowoption ADD CONSTRAINT actionrowoption_actionrowid_fk FOREIGN KEY (actionrowid) REFERENCES actionrow(id) MATCH FULL ON DELETE CASCADE;
+</statement>
+<statement>
+ALTER TABLE mmonit ADD COLUMN welcome SMALLINT;
+</statement>
+<statement>
+UPDATE mmonit SET welcome=1;
+</statement>
+<statement>
+DELETE FROM session;
+</statement>
+
+</statements>
+
+</patch>
+

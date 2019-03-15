@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>lib/css/styles.css" media="screen" rel="Stylesheet">
+    <title>Error <?cs var:Error.status_code ?></title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>apple-touch-icon-precomposed.png"/>
+</head>
+<body onclick="history.back();" class="error-page">
+    <div id="wrap">
+        <div id="main">
+            <?cs if:Error.status_code == 400 ?>
+            <h1>Bad Request</h1>
+            <?cs elif:Error.status_code == 401 ?>
+            <h1>Unauthorized</h1>
+            <?cs elif:Error.status_code == 404 ?> 
+            <h1>Not Found</h1>
+            <?cs elif:Error.status_code == 500 ?> 
+            <h1>Internal Server Error</h1>
+            <?cs else ?>
+            <h1>Error <?cs var:Error.status_code ?></h1>
+            <?cs /if ?>
+            <h4><?cs var:Error.message ?></h4>
+            <div class="toright">
+                <img src="<?cs loop:x = #Request.PathLevel, #2, "-1" ?>../<?cs /loop ?>img/panic.jpg" border="0">
+            </div>
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+</body>
+</html>

@@ -1,0 +1,2 @@
+<?cs set:Session.invalidate="true" ?>
+<?cs set:Response.redirect="/" ?>

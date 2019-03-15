@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 5 to 6 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=OFF;
+</statement>
+<statement>
+ALTER TABLE host ADD COLUMN eventscount INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN eventscount INTEGER DEFAULT 0;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+ALTER TABLE host ADD COLUMN eventscount INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN eventscount INTEGER DEFAULT 0;
+</statement>
+
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+ALTER TABLE host ADD COLUMN eventscount INTEGER DEFAULT 0;
+</statement>
+<statement>
+ALTER TABLE service ADD COLUMN eventscount INTEGER DEFAULT 0;
+</statement>
+
+</statements>
+
+</patch>
+

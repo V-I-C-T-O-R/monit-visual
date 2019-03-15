@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Admin | Hosts</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>
+                    Edit host
+                </h1>
+            </div>
+            <form data-bind="submit:updateHost" id="theform" autocomplete="off">
+                <input type="hidden" id="CSRFToken" name="CSRFToken" value="<?cs var:Request.CSRFToken ?>">
+                <input type="hidden" data-bind="value:sslout" name="sslout">
+                <div class="row-fluid">
+                    <div class="span8">
+                        <ul class="tableView">
+                            <li data-bind="validationElement:hostname">
+                                <span>Host Name</span>
+                                <span class="accessory">
+                                    <input placeholder="Descriptive name..."
+                                    data-bind="value:hostname, valueUpdate: 'afterkeydown'"
+                                    name="hostname"
+                                    />
+                                </span>
+                            </li>
+                            <li>
+                                <span class="valign-middle">Persistent hostname</span>
+                                <span class="accessory valign-middle">
+                                    <label class="switch-button">
+                                        <input data-bind="checked: keepname" name="keepname" type="checkbox" />
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </li>
+                        </ul>
+                        <h3>Host Description</h3>
+                        <ul class="tableView">
+                            <li  data-bind="validationElement:description">
+                                <textarea 
+                                class="accessory-color"
+                                placeholder="Enter a host description..."
+                                data-bind="text:description"
+                                name="description" rows="2"
+                                maxlength="1024"
+                                ></textarea>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                </div> <!-- row-fluid -->
+                <div class="row-fluid">
+                    <div class="span8">
+                        <ul class="tableView">
+                            <li>
+                                <span>Host Status</span>
+                                <span class="accessory">
+                                    <div class="select-button">
+                                        <select name="status" data-bind="value: status, foreach: availableHostStatuses">
+                                            <option data-bind="text: $data, attr: {value: $index()}"></option>
+                                        </select>
+                                    </div>
+                                </span>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                </div> <!-- row-fluid -->
+                <div class="row-fluid">
+                    <div class="span8">
+                        <ul class="tableView"> 
+                            <li>
+                                <span>Last updated</span>
+                                <span class="accessory disabled" data-bind="text:lastmodified"></span>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                </div> <!-- row-fluid -->
+                <div class="row-fluid">
+                    <div class="span8">
+                        <ul class="tableView">
+                            <li>
+                                <span>Monit ID</span>
+                                <span class="accessory disabled" data-bind="text:monitid"></span>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                </div> <!-- row-fluid -->
+                <div class="row-fluid">
+                    <div class="span8">
+                        <h3>Monit Network Settings</h3>
+                        <ul class="tableView">
+                            <li data-bind="validationElement:monituser">
+                                <span>Username</span>
+                                <span class="accessory">
+                                    <input placeholder="Username..."
+                                    data-bind="value:monituser, valueUpdate: 'afterkeydown'"
+                                    name="monituser"
+                                    />
+                                </span>
+                            </li>
+                            <li data-bind="validationElement:monitpassword">
+                                <span>Password</span>
+                                <span class="accessory">
+                                    <input placeholder="Password..."
+                                    data-bind="value:monitpassword, valueUpdate: 'afterkeydown'"
+                                    name="monitpassword"
+                                    type="password"
+                                    />
+                                </span>
+                            </li>
+                            <li>
+                                <span>Address</span><span class="accessory disabled" data-bind="text:ipaddrin"></span>
+                            </li>
+                            <li>
+                                <span>Port</span>
+                                <span class="accessory disabled" data-bind="text: portin() + (sslin() ? ' (SSL)' : '')"></span>
+                            </li>
+                            <li class="list" data-bind="click:toggleNetworkOverride, css:enableNetworkOverride() ? 'active' : ''">
+                                <span>Override network settings</span>
+                                <span class="accessory"></span>
+                            </li>
+                            <!-- NETWORK OVERRIDE -->
+                            <li class="insertView"> 
+                                <ul class="tableView dark" data-bind="slideVisible:enableNetworkOverride()">
+                                    <li>
+                                        <span>Address</span>
+                                        <span class="accessory">
+                                            <input placeholder="IP or name..."
+                                            data-bind="value:ipaddrout"
+                                            name="ipaddrout"
+                                            />
+                                        </span>
+                                    </li>
+                                    <li data-bind="validationElement:portout">
+                                        <span>Port</span>
+                                        <span class="accessory">
+                                            <input placeholder="Port number..."
+                                            data-bind="value:portout, valueUpdate: 'afterkeydown'"
+                                            name="portout"
+                                            />
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <span>Enable SSL</span>
+                                        <span class="accessory">
+                                            <label class="switch-button" title="Turn on if Monit is using SSL">
+                                                <input data-bind="checked:ssl" name="ssl" type="checkbox" />
+                                                <span></span>
+                                            </label>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </li> <!-- END NETWORK OVERRIDE -->
+                            <li id="test-connection">
+                                <span><a href="#" data-bind="click:test">Connection status</a></span>
+                                <span class="accessory">
+                                    <span class="led-button" id="connection-status" data-bind="popover:{content: connectionInfo, placement:popoverplacement}, css:connectionStatus"></span>
+                                </span>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                </div> <!-- row-fluid -->
+                <div class="row-fluid">
+                    <div class="span8">
+                        <ul class="tableView">
+                            <li>
+                                <span class="text accessory-color">
+                                    A Monit agent has to send status update within a certain timeframe. Acceptable report
+                                    skew gives the number of Monit cycles M/Monit will wait before reporting the host as
+                                    down. Default value is <span class="text" data-bind="text:defaultskew"></span>. You might want to correlate this with this host's poll cycle length
+                                    which is <span class="badge" data-bind="text:poll"></span> seconds.
+                                </span>
+                            </li>
+                            <li>
+                                <span>Acceptable report skew</span>
+                                <span class="accessory">
+                                    <input data-bind="value:skew" name="skew" type="number" min="1" max="999999" style="width:70px;" /> cycles
+                                </span>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                </div> <!-- row-fluid -->
+                <!-- Buttons -->
+                <div class="row-fluid" id="actions">
+                    <div class="span6">
+                        <button class="btn btn-primary btn-inverse" data-bind="disable:hasErrors(), click:updateHost" type="submit">Save</button>
+                        <button class="btn" data-bind="click:cancel">Cancel</button>
+                    </div> <!-- span10 -->
+                    <div class="span2">
+                        <button class="btn toright" data-target="#confirmDelete" data-toggle="modal" >Delete</button>
+                    </div> <!-- span2 -->
+                </div> <!-- row-fluid -->
+            </form>
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Hidden -->
+    <!-- Confirm Delete Dialog -->
+    <div id="confirmDelete" class="modal hide">
+        <div class="modal-body">
+            <h2>Delete <span class="text-error" data-bind='text:hostname'></span>?</h2>
+            <p>Are you sure you want to remove this host from the system? All statistics and events for the host will be removed as well. There is no undo.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" data-dismiss="modal" data-bind="click:$root.deleteHost">Delete</button>
+        </div>
+    </div>
+    
+    <div id="helpbox">
+        <div class="title"><h2>Host Help</h2></div>
+        <div class="content paragraphify">
+            <p>
+                Use this page to edit a Host running a Monit agent.
+            </p>
+            <h3>
+                Host Name
+            </h3>
+            <p>
+                The Host Name field is a descriptive name which is used in various places in M/Monit to refer to the Host. The first time Monit
+                reports in, a new Host entry is created and the Host Name is set to the hostname reported by Monit. This name is usually the DNS
+                name of the host or its IP-address. If the hostname later is changed in DNS the host name will automatically be updated in M/Monit
+                after Monit is restarted on the given host.
+            </p>
+            <p>
+                If you change the host name yourself, the <strong>persistent</strong> hostname switch is turned on and Monit will no longer overwrite the host name
+                automatically. This can be useful if you want to use and <em>keep</em> a descriptive name for the host, such as "database server #1". To reenable automatic host name
+                updates, just turn off the Persistent hostname switch.
+            </p>
+            <h3>
+                Monit ID
+            </h3>
+            <p>
+                Each Monit instance is identified by a unique ID, by default stored in the file, <code>$HOME/.monit.id</code> on the host running Monit. This
+                file is automatically created at startup by Monit if it does not exist. Care should be taken not to delete or change this file as the ID is used
+                to pair messages from Monit with a host entry in M/Monit.
+            </p>
+            <p>
+                A new host is automatically created in M/Monit by a message from Monit if and only if the ID embedded in the message is new and unique, otherwise
+                M/Monit will use the ID to find the host in its database and update the host status.
+            </p>
+            <h3>
+                Host Status
+            </h3>
+            <p>
+                A Host can be in one of three states:
+            </p>
+            <ul>
+                <li>
+                    <em>Active</em> - When Monit start, it activates itself automatically in M/Monit by sending a start event message. M/Monit expect periodic
+                    status reports from active hosts. If a host does not send a status report within a certain time frame it is marked as down and an alert is
+                    generated by M/Monit. See also <em>skew</em> below.
+                </li>
+                <li>
+                    <em>Inactive</em> - If Monit was stopped correctly, it deactivates itself automatically by sending a stop event message to M/Monit.
+                </li>
+                <li>
+                    <em>Ignored</em> - The Ignored state can be used to temporarily suppress all events from Monit. For example, if you are going to perform
+                    maintenance work on a host, and you expect Monit to issue lots of alerts, set the Host in Ignored state to ignore events sent by Monit for
+                    the duration of the work.
+                </li>
+            </ul>
+            <h3>
+                Network settings
+            </h3>
+            <p>
+                The fields <b>Monit Network Settings</b>, are used to uniquely specify connection to and from Monit.
+            </p>
+            <p> 
+                Monit username and password are the credentials used for Monit authentication.
+            </p>
+            <p>
+                The address is either the IP-address or hostname of the host Monit is running on. M/Monit will use this address to connect to Monit and issue
+                actions when you click a button in the host/detail page. The address is read-only and managed by Monit. Dynamic changes (such as DHCP lease) will
+                automatically update the host settings in M/Monit.
+            </p>
+            <p>
+                Monit port number is the HTTP port the Monit agent is setup with on the host (usually 2812). The port number is also read-only and automatically
+                updated by Monit. If SSL is used, you'll find this indicated in parenthesis after the port number.
+            </p>  
+            <p>
+                <strong>Note:</strong> If the Monit Host is behind a NAT or a Proxy and M/Monit must use a different IP-address and port number to reach Monit,
+                click [Override network settings] and specify the outbound IP-address, port number and whether SSL should be used by M/Monit to reach Monit.
+                Override settings takes precedence and will be used instead of Monit's reported values. If Monit's configuration is changed later, you will need
+                to update the override settings manually.
+            </p>
+            <p>
+                <b class="text-info">Connection status</b> shows the connection status to Monit, using the current network settings. The check is performed
+                automatically when this page opens, but you can also run the test by clicking the Connection status link.
+            </p>
+            <h3>
+                Acceptable report skew
+            </h3>
+            <p>
+                Monit has to send status update within a certain timeframe. Acceptable report skew specify the number of Monit cycles M/Monit will wait before
+                reporting the Host as down. The default value is 3 Monit poll cycles. If Monit is setup with a short poll cycle, e.g. 5 seconds or if Monit is
+                verifiable up, but for some reason is slow to send reports it can be useful to increase the skew value to avoid getting false alerts because
+                Monit did not report in on time.
+            </p>
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout-mapping.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.validation.js?version=372"></script>
+    <script src="../../lib/js/tableview.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/admin/admin_hosts_crud.js?version=372"></script>
+</body>
+</html>

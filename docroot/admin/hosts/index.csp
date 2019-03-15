@@ -1,0 +1,111 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Admin | Hosts</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <link rel="stylesheet" href="../../assets/admin/admin_hosts.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+    	<div id="header">
+    		<div id="nav">
+        	    <a id="logo" target="webapp" href="../../"></a>
+        	    <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+    		</div> <!-- nav -->
+    	</div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <!-- <button id="crud" class="add-button" title="Add new agent-less Host"></button> -->
+                <h1>
+                    Hosts
+                </h1>
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    Hosts with Monit agents. Click on a row to change the settings for the host. <a href="#"
+                    id="more">More...</a>
+                    <span id="moretext">
+                        Monit will automatically create a new Host entry the first time it reports in to M/Monit. To make Monit
+                        report to M/Monit, please use the <code>set mmonit</code> statement in your <code>.monitrc</code> file.
+                        After Monit has registered itself in M/Monit you can edit the Host in the table below. See also the <a
+                        href="http://mmonit.com/documentation/">M/Monit manual</a> for more details.
+                    </span>
+                </div> <!-- span12 -->
+            </div> <!-- row-fluid -->
+            <div class="row-fluid yui-skin-sam">
+                <div>
+                    <input class="searchfield toright" id="searchField" placeholder="Find host.." size="15">
+                    <div class="toleft numHosts hidden-phone">Number of Hosts: <span id="numHosts">0</span></div>
+                </div>
+                <div id="hostTable" class="span12"></div>
+            </div> <!-- row-fluid -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Confirm Delete Dialog -->
+    <div id="confirmDelete" class="modal hide">
+        <div class="modal-body">
+            <h2>Delete <span class="text-error"></span>?</h2>
+            <p>Are you sure you want to remove this host from the system? All events for the host will be removed as well. There is no undo.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" data-dismiss="modal" id="deletebtn">Delete</button>
+        </div>
+    </div>
+    <script src="../../lib/f/yui/2/utilities/utilities.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/datatable.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/admin/admin_hosts.js?version=372"></script>
+</body>
+</html>

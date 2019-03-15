@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>M/Monit Admin | Users</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>
+                    <?cs if:Request.Param.uname?>Edit user<?cs else ?>New user<?cs /if ?>
+                </h1>
+            </div>
+            <form data-bind="submit:saveUser" id="theform" autocomplete="off">
+                <input type="hidden" id="CSRFToken" name="CSRFToken" value="<?cs var:Request.CSRFToken ?>">
+                <div class="row-fluid">
+                    <div class="span8">
+                        <ul class="tableView">
+                            <li data-bind="validationElement:fullname">
+                                <span>Name</span>
+                                <span class="accessory">
+                                    <input placeholder="First + Last Name..." data-bind="value:fullname, hasFocus:isnew, valueUpdate: 'afterkeydown'" name="fullname" autocomplete="off" />
+                                </span>
+                            </li>
+                        </ul>
+                        <h3>Credentials</h3>
+                        <ul class="tableView">
+                            <li data-bind="validationElement:uname">
+                                <span>Username</span><span class="accessory">
+                                    <input placeholder="Username..." data-bind="value:uname, disable:original_uname, valueUpdate: 'afterkeydown'" name="uname" autocomplete="off" />
+                                </span>
+                            </li>
+                            <li data-bind="validationElement:password">
+                                <span>Password</span>
+                                <span class="accessory">
+                                    <input placeholder="Password..." type="password" data-bind="value:password, selectText:'all', valueUpdate: 'afterkeydown'" name="password" autocomplete="off" />
+                                </span>
+                            </li>
+                        </ul>
+                        <h3>Contact information</h3>
+                        <ul class="tableView">
+                            <li>
+                                <span>Title</span>
+                                <span class="accessory">
+                                    <input placeholder="Title..." data-bind="value:title" name="title" autocomplete="off" />
+                                </span>
+                            </li>
+                            <li data-bind="validationElement:email">
+                                <span>E-mail</span>
+                                <span class="accessory">
+                                    <input placeholder="E-mail..." data-bind="value:email, valueUpdate: 'afterkeydown'" name="email" autocomplete="off" />
+                                </span>
+                            </li>
+                            <li data-bind="validationElement:phone">
+                                <span>Phone#</span>
+                                <span class="accessory">
+                                    <input placeholder="Phone Number..." data-bind="value:phone, valueUpdate: 'afterkeydown'" name="phone" autocomplete="off" />
+                                </span>
+                            </li>
+                            <li data-bind="validationElement:mobile">
+                                <span>Mobile#</span>
+                                <span class="accessory">
+                                    <input placeholder="Mobile Number..." data-bind="value:mobile, valueUpdate: 'afterkeydown'" name="mobile" autocomplete="off" />
+                                </span>
+                            </li>
+                            <li>
+                                <span>Messaging</span>
+                                <span class="accessory">
+                                    <input placeholder="Account Name..." data-bind="value:imname" name="imname" autocomplete="off" />
+                                </span>
+                            </li>
+                            <li>
+                                <span>Messaging Type</span>
+                                <span class="accessory">
+                                    <div class="select-button">
+                                        <!-- Add your own IM types as needed -->
+                                        <select name="imtype" data-bind="value:imtype">
+                                            <option value="None">None</option>            
+                                            <option value="AIM">AIM</option>            
+                                            <option value="GTalk">GTalk</option>
+                                            <option value="Jabber">Jabber</option>
+                                            <option value="iMessage">iMessage</option>
+                                            <option value="Skype">Skype</option>       	        	          	      
+                                            <option value="Yahoo">Yahoo</option>       	        	          	      
+                                            <option value="ICQ">ICQ</option>     
+                                        </select> 
+                                    </div>
+                                </span>
+                            </li>
+                        </ul>
+                        <h3>Settings</h3>
+                        <ul class="tableView">
+                            <li>
+                                <span class="valign-middle">Administrator access?</span>
+                                <span class="accessory valign-middle">
+                                    <label class="switch-button">
+                                        <input data-bind="checked:admin" name="admin" type="checkbox" autocomplete="off" />
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </li>
+                        </ul>
+                    </div> <!-- span8 -->
+                    <div class="picture-box span4 upload-button" title="Click or drop file here to upload a new picture">
+                        <div class="image dropzone" id="preview"></div>
+                        <input type="file" capture="camera" accept="image/*" id="fileInput">
+                    </div>
+                        
+                </div> <!-- row-fluid -->
+                <!-- Buttons -->
+                <div class="row-fluid" id="actions">
+                    <div class="span6">
+                        <button class="btn btn-primary btn-inverse" data-bind="disable:hasErrors(), click:saveUser"><span id="button-spinner" class="inverse"></span> Save</button> 
+                        <button class="btn" data-bind="click:cancel">Cancel</button>
+                    </div>
+                    <div class="span2">
+                        <button class="btn toright" data-bind="visible:original_uname" data-target="#confirmDelete" data-toggle="modal" >Delete</button>
+                    </div>
+                </div> <!-- row-fluid -->
+            </form>
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Confirm Delete Dialog -->
+    <div id="confirmDelete" class="modal hide">
+        <div class="modal-body">
+            <h2>Delete <span class="text-error" data-bind='text:uname'></span>?</h2>
+            <p>Are you sure you want to remove this user from the system? There is no undo.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" data-dismiss="modal" data-bind="click:$root.deleteUser">Delete</button>
+        </div>
+    </div>
+    <div id="helpbox">
+        <div class="title"><h2>Users Help</h2></div>
+        <div class="content paragraphify">
+            <p>
+                Use this page to create or edit a user. 
+            </p>
+            <p>
+                A user name (uname) is required to be able to login to M/Monit. The user name is immutable and once created may not be changed. Password is
+                stored in the database as a MD5 encrypted text string. The other fields are optional, but contact information can come in handy if more people
+                are using M/Monit. It is recommended to fill in email and GTalk/Jabber information so you will be able to select the user from the Alert page to
+                receive alerts.
+            </p>
+            <p>
+                <strong>Photo:</strong> To add or change the user's photo, click the image box. This will open up a dialog from where you can upload an image from your
+                computer. Then, click save. On your phone, click the image to take a photo or upload an existing photo from your library.
+            </p>
+            <p>
+                Enable [Administrator access] if this user should have administrator privileges. This grants access to all pages and functions in M/Monit. Users
+                without administrator privileges cannot access Admin pages nor can they perform any action on a Monit service in the host status page (so they
+                cannot restart or stop services on a host).
+            </p>
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout-mapping.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.validation.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/admin/admin_users_crud.js?version=372"></script>
+</body>
+</html>

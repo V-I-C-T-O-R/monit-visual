@@ -1,0 +1,382 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Reports | Analytics</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <link href="../../assets/reports/analytics.css?version=372" media="screen" rel="Stylesheet">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp">Dashboard</a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/">Status</a>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../reports/analytics/">Reports</a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../admin/general/">Admin</a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main" style="display:none;" data-bind="visible: true">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>
+                    Analytics
+                </h1>
+            </div>
+            <div class="row-fluid">
+                <div class="span12" id="query">
+                    <div class="controlbox hidden-phone">
+                        <button type="button" class="btn btn-start" data-bind="event: {vclick: start}" title="Run query and show charts"><i class="icon-play"></i></button>
+                        <button type="button" class="btn btn-stop" data-bind="event: {vclick: stop}" title="Remove charts and reset query"><i class="icon-stop"></i></button>
+                    </div>
+                    <div class="menutable">
+                        <div class="menucontrols">
+                            <span class="description">Show</span>
+                            <!-- chart types menu -->
+                            <div class="charttype tableViewMenu">
+                                <button class="btn btn-block btn-menucharts" data-bind="css: {'btn-link': ! isPhone()}, style: {'max-width': isPhone() ? 'none' : (((width() - 300) / 3) + 'px')},  event: {vclick: TableView.callout.toggle}">
+                                    <span class="caret visible-phone"></span>
+                                    <span data-bind="text: $root.menucharts2label($data)"></span>
+                                </button>
+                                <div class="callout popup">
+                                    <div class="tableViewScroller">
+                                        <div class="tableViewTop current">
+                                            <div class="tableViewBar">
+                                                <div class="title">Charts</div>
+                                                <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(menucharts()) == menucharts().length}, event: {vclick: Menu.toggleSelection.bind($data, menucharts())}"></span>
+                                            </div>
+                                            <ul class="tableView dark" data-bind="foreach: menucharts">
+                                                <!-- ko if: active() -->
+                                                <li class="select" data-bind="event: {vclick: $root.selectChart}, css:{checked:selected}">
+                                                    <span data-bind="text: name"></span>
+                                                    <span class="accessory"></span>
+                                                </li>
+                                                <!-- /ko -->
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="description">for</span>
+                            <!-- hosts/hostgroups menu -->
+                            <div class="host tableViewMenu">
+                                <button class="btn btn-block btn-menuhosts" data-bind="css: {'btn-link': ! isPhone()}, style: {'max-width': isPhone() ? 'none' : (((width() - 300) / 3) + 'px')}, event: {vclick: TableView.callout.toggle}">
+                                    <span class="caret visible-phone"></span>
+                                    <span data-bind="text: $root.menuhosts2label($data)"></span>
+                                </button>
+                                <div class="callout popup">
+                                    <div class="tableViewScroller">
+                                        <div class="tableViewTop current">
+                                            <ul class="tableView dark">
+                                                <li class="list" data-bind="event: {vclick: hostViewController.push}, css:{disabled:menuhosts().length == 0}">
+                                                    <span>Hosts</span>
+                                                    <span class="accessory"></span>
+                                                    <div class="tableViewSubView">
+                                                        <div class="tableViewBar">
+                                                            <div>
+                                                                <div class="title">Hosts</div>
+                                                                <span class="backButton" data-bind="event: {vclick: hostViewController.pop}"></span>
+                                                                <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(menuhosts()) == menuhosts().length}, event: {vclick: $root.selectAllHosts}"></span>
+                                                            </div>
+                                                            <div data-bind="visible: menuhosts().length > 9">
+                                                                <input class="searchfield" placeholder="Search hosts..." type="search" data-bind="value: hostQuery, valueUpdate: ['keyup','search'], blurOnEnter: true" autocomplete="off">
+                                                            </div>
+                                                        </div>
+                                                        <ul class="tableView dark" data-bind="foreach: menuhosts">
+                                                            <!-- ko if: active() -->
+                                                                <li class="select" data-bind="event: {vclick: $parent.selectHost}, css:{checked:selected}">
+                                                                    <span data-bind="text: name"></span>
+                                                                    <span class="accessory"></span>
+                                                                </li>
+                                                            <!-- /ko -->
+                                                        </ul>
+                                                    </div>
+                                                </li>
+                                                <li class="list" data-bind="event: {vclick: hostViewController.push}, css:{disabled:menuhostgroups().length == 0}">
+                                                    <span>Host groups</span>
+                                                    <span class="accessory"></span>
+                                                    <div class="tableViewSubView">
+                                                        <div class="tableViewBar">
+                                                            <div class="title">Host groups</div>
+                                                            <span class="backButton" data-bind="event: {vclick:hostViewController.pop}"></span>
+                                                            <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(menuhostgroups()) == menuhostgroups().length}, event: {vclick:$root.selectAllHostGroups}"></span>
+                                                        </div>
+                                                        <ul class="tableView dark" data-bind="foreach: menuhostgroups">
+                                                            <li class="select" data-bind="event: {vclick: $parent.selectHostGroup}, css:{checked:selected}">
+                                                                <span data-bind="text: name"></span>
+                                                                <span class="accessory"></span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="description">for the last</span>
+                            <!-- range menu -->
+                            <div class="range tableViewMenu">
+                                <button class="btn btn-block btn-menurange" data-bind="css: {'btn-link': ! isPhone()}, style: {'max-width': isPhone() ? 'none' : (((width() - 300) / 3) + 'px')}, event: {vclick: TableView.callout.toggle}">
+                                    <span class="caret visible-phone"></span>
+                                    <span data-bind="text: $root.menurange2label($data)"></span>
+                                </button>
+                                <div class="callout popup">
+                                    <div class="tableViewScroller">
+                                        <div class="tableViewTop current">
+                                            <ul class="tableView dark" data-bind="foreach: menurange">
+                                                <li class="select" data-bind="event: {vclick:$root.selectRange}, css:{checked:selected}">
+                                                    <span data-bind="text: name"></span>
+                                                    <span class="accessory"></span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- menucontrols -->
+                    </div> <!-- menutable -->
+                    <div class="controlbox visible-phone">
+                        <button type="button" class="btn btn-mini btn-start" data-bind="event: {vclick: start}" title="Run query and show charts"><i class="icon-play"></i></button>
+                        <button type="button" class="btn btn-mini btn-stop" data-bind="event: {vclick: stop}" title="Remove charts and reset query"><i class="icon-stop"></i></button>
+                    </div>
+                </div> <!-- query -->
+            </div> <!-- row-fluid -->
+            <div class="row-fluid">
+                <div class="charts gap top bottom">
+                    <div id="info" data-bind="visible: info().length, html: info()"></div>
+                    <!-- ko foreach: {data: charts} -->
+                    <div class="chart" data-bind="visible: show()">
+                        <div class="header">
+                            <div class="btn-group btn-chartcontrols">
+                                <!-- ko if: showSearchButton() -->
+                                <button type="button" class="btn btn-mini btn-search" title="Filter data" data-bind="event: {vclick: $root.toggleSearch}"><i class="icon-search"></i></button>
+                                <!-- /ko -->
+                                <!-- ko if: showTrendButton() -->
+                                <button type="button" class="btn btn-mini btn-trend" title="Show trend" data-bind="event: {vclick: $root.toggleTrend}, css: { active: showTrend() }"><i class="icon-forward"></i></button>
+                                <!-- /ko -->
+                                <!-- ko if: showLegendButton() -->
+                                <button type="button" class="btn btn-mini btn-legend" title="Show legend" data-bind="event: {vclick: $root.toggleLegend}, css: { active: showLegend() }"><i class="icon-th-list"></i></button>
+                                <!-- /ko -->
+                            </div>
+                            <h2 data-bind="text: title"></h2>
+                        </div>
+                        <div data-bind="visible: showLegend()">
+                            <div class="legend" data-bind="attr: {id: legendid}"></div>
+                        </div>
+                        <div class="canvasBox">
+                            <div class="canvas" data-bind="attr: {id: canvasid}"></div>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                </div> <!-- charts -->
+            </div> <!-- row-fluid -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Help -->
+    <div id="helpbox">
+        <div class="title">
+            <h2>Analytics Help</h2>
+        </div>
+        <div class="content paragraphify">
+            <p>
+                M/Monit collects key performance data from both hosts and services. From this page you can run queries and investigate the data.
+            </p>
+            <p>
+                <em>Only</em> services which are monitored by Monit are displayed in the charts. If you want to include a particular
+                service such as a process or a filesystem in the charts, you must add a check for the service in Monit's control file.
+            </p>
+            <h3>Query</h3>
+            <p>
+                A query is built by selecting chart types, hosts or hostgroups and a time range. To draw the charts, press the play <i class="icon-play"></i>                
+                button. To reset all menu choices and start over again select the stop <i class="icon-stop"></i> button.
+            </p>
+            <p>
+                Selected hosts are displayed in the same chart for easy comparison, for example if you select the [space %] chart and [all hosts],
+                you can see all monitored filesystems in one chart. You can then compare space usage across the whole selection and identify
+                underutilized or overutilized filesystems.
+            </p>
+            <h3>Chart types</h3>
+            <p>
+                The type of charts that are displayed depends on the range selected and on the number of selected hosts. The [seconds] range uses bar charts
+                and/or pie charts to display the current value. The rest of the time ranges use line charts. The cpu usage line chart shows cpu total if multiple
+                hosts are selected, if only one host is selected, cpu usage is displayed as a stacked area chart detailing cpu user%, system%, wait% values.
+            </p>
+            <p>
+                The [seconds] time range is special in that it shows a snap-shot of collected data from the last minute. To see this chart,
+                Monit must run with a poll-cycle which is less than 1 minute, otherwise this chart will be empty, except if you happen to draw the
+                chart within the minute data was collected.
+            </p>
+            <p>
+                Datasets with zero values are not displayed in the charts
+            </p>
+            <h3>Chart buttons</h3>
+            <p>
+                <i class="icon-search"></i> <b>Search</b> You can further refine the selection by pressing the search button for a given chart. This allows you to filter
+                the chart's dataset and only show entries that match a search term. For example, if you have Apache httpd running on several hosts and wish to compare cpu
+                utilization, select the [process cpu %] chart and search for apache.
+            </p>
+            <p>
+                <i class="icon-forward"></i> <b>Trend</b> Use the trend button to display a trend line and predict the future! The method we use is either a
+                linear or an exponential extrapolation based on a best-fit. A trend line is a stippled line that projects forward in time by extending the
+                selected time range twice. For example, if [month] is selected, the trend line will show the estimate for the next month. Note that predictions
+                may be incorrect if data does not follow a linear or an exponential trend. In general, a longer time range is more likely to produce a better
+                estimate.
+            </p>
+            <p>
+                <i class="icon-th-list"></i> <b>Legend</b> The legend button displays the chart's legend in addition to minimum,
+                maximum and average values and the delta for the given range. The <strong>delta</strong> is the <em>rightmost</em>
+                x-axis value <em>minus</em> the <em>leftmost</em> x-axis value. That is, the chart's range end value minus the chart's
+                range start value.
+            </p>
+            <p>
+                The [seconds] range is an exception and only shows the current value since a minute is the lowest resolution.
+            </p>
+            <p>
+               Items can be removed from the chart by clicking on the legend's color box. If a trend line is displayed, the legend table will also contain future
+               estimated values.
+            </p>
+            <h3>Chart drawings</h3>
+            <p>
+                The charts does not refresh automatically so you can work with the data without having them change underneath you.
+            </p>
+            <p>
+                Charts that show percentage, uses an Y-axis from 0 to 100. If you hover the cursor over a percentage chart, the cursor changes into a
+                magnification glass. Click, and the chart "zooms in" by setting the highest Y-axis value equal to the chart's height. Click the chart again to
+                zoom out.
+            </p>
+            <p>
+                If you hover or tap a line/bar/slice, a tooltip is displayed with a point-in-time value. If the legend table is displayed, the corresponding
+                legend will be highlighted as well.
+            </p>
+            <p>
+                Monit send data samples to M/Monit at the end of each poll cycle. If Monit's poll-cycle is longer than 1 minute, charts with [hour] range will show
+                data points instead of a continuous line. The reason for this is that [hour] charts draw with the lowest resolution or precision, which is 1 minute.
+                To show a continuous line, Monit must have a poll-cycle which is less then 1 minute (50s max). The next chart resolution is 15 minutes which is used
+                for charts in the [day] range and as long as Monit's poll cycle is less than 15 minutes, charts in this range will display a continuous line. See the
+                table below for chart precision and how data is aggregated.
+            </p>
+            <p>
+                If Monit stops sending status updates or if M/Monit is stopped, you might see gaps in the charts - such gaps represent "no data available".
+            </p>
+            <h3>Data</h3>
+            <div class="row-fluid">
+                <div class="span6">
+                    <p>
+                        Data is collected and aggregated by M/Monit for best memory and space use and display speed. Historical data is stored for up to three years before
+                        being automatically deleted. This can be changed in <a href="../../admin/general/">admin/general</a> settings.
+                    </p>
+                    <p>
+                        The following table show how data is average aggregated and the precision for the different ranges.
+                    </p>
+                </div> <!-- span6 -->
+                <div class="span6">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Range</th>
+                                <th>Precision</th>
+                            </tr>
+                        </thead>
+                        <tr>
+                            <td>Last seconds</td>
+                            <td>Snapshot</td>
+                        </tr>
+                        <tr>
+                            <td>Last Hour</td>
+                            <td>1 Minute</td>
+                        </tr>
+                        <tr>
+                            <td>Last Day</td>
+                            <td>15 Minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Last Week</td>
+                            <td>2 Hours</td>
+                        </tr>
+                        <tr>
+                            <td>Last Month</td>
+                            <td>12 Hours</td>
+                        </tr>
+                        <tr>
+                            <td>Last 6 Months</td>
+                            <td>1 Day</td>
+                        </tr>
+                        <tr>
+                            <td>Last Year</td>
+                            <td>7 Days</td>
+                        </tr>
+                        <tr>
+                            <td>Last 3 Years</td>
+                            <td>14 Days</td>
+                        </tr>
+                    </table>
+                </div> <!-- span6 -->
+            </div> <!-- row-fluid -->
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.flot.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.flot.resize.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.flot.pie.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.flot.stack.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.flot.time.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/math.js?version=372"></script>
+    <script src="../../lib/js/chart.js?version=372"></script>
+    <script src="../../lib/js/ui.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/js/tableview.js?version=372"></script>
+    <script src="../../lib/js/menu.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/f/strftime/strftime.js?version=372"></script>
+    <script src="../../assets/reports/trends.js?version=372"></script>
+    <script src="../../assets/reports/analytics.js?version=372"></script>
+</body>
+</html>

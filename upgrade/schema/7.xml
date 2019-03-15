@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 6 to 7 (version 7 was not released => empty patchset) -->
+
+<patch>
+
+<statements type="sqlite"></statements>
+<statements type="mysql"></statements>
+<statements type="postgresql"></statements>
+
+</patch>
+

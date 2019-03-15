@@ -1,0 +1,630 @@
+/*
+ * SQLITE DATABASE SCHEMA FOR THE M/MONIT DATABASE. 
+ *
+ * To recreate the database: sqlite3 mmonit.db < mmonit-schema.sqlite
+ *
+ * (Note: sqlite >= 3.6.19 is required)
+ */
+
+
+PRAGMA foreign_keys = ON;
+
+
+/* ---------------------------------------------------- M/Monit system table */
+
+
+CREATE TABLE mmonit (
+  schemaversion INTEGER NOT NULL,
+  welcome INTEGER,
+  purgeevents INTEGER,
+  purgeanalytics INTEGER,
+  skew INTEGER
+);
+
+
+/* -------------------------------------------------------------- Name table */
+
+
+CREATE TABLE name (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(255) UNIQUE NOT NULL
+);
+CREATE INDEX name_name_index ON name(name);
+
+
+/* ------------------------------------------------------------- User tables */
+
+
+CREATE TABLE users (
+  uname VARCHAR(20) PRIMARY KEY, 
+  password VARCHAR(56) NOT NULL,
+  fullname VARCHAR(255),
+  title VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(40),
+  mobile VARCHAR(40),
+  imname VARCHAR(255),
+  imtype VARCHAR(20),
+  image VARCHAR(255),
+  refresh INTEGER DEFAULT 5000
+);
+
+
+CREATE TABLE roles (
+  role VARCHAR(20) PRIMARY KEY,
+  description VARCHAR(255)
+);
+
+
+CREATE TABLE userroles (
+  uname VARCHAR(20) NOT NULL, 
+  role VARCHAR(20)  NOT NULL,
+  PRIMARY KEY(uname, role),
+  CONSTRAINT userroles_role_fk FOREIGN KEY(role) REFERENCES roles(role) ON DELETE CASCADE,
+  CONSTRAINT userroles_uname_fk FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+
+
+/* ------------------------------------------------------------- Host tables */
+
+
+CREATE TABLE host (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  incarnation INTEGER,
+  status CHAR(1) NOT NULL,
+  nameid INTEGER NOT NULL,
+  keepname INTEGER DEFAULT 0,
+  monitid VARCHAR(255) UNIQUE NOT NULL,
+  ipaddrin VARCHAR(255) NOT NULL,
+  ipaddrout VARCHAR(255),
+  portin INTEGER,
+  portout INTEGER DEFAULT -1,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  sslin INTEGER,
+  sslout INTEGER DEFAULT -1,
+  description TEXT,
+  poll INTEGER DEFAULT 0,
+  startdelay INTEGER DEFAULT 0,
+  controlfilenameid INTEGER NOT NULL,
+  statusmodified INTEGER,
+  servicemodified INTEGER DEFAULT 0,
+  serviceskew INTEGER DEFAULT -1,
+  serviceup INTEGER DEFAULT 0,
+  servicedown INTEGER DEFAULT 0,
+  serviceunmonitorauto INTEGER,
+  serviceunmonitormanual INTEGER,
+  version VARCHAR(20),
+  platformname VARCHAR(255),
+  platformrelease VARCHAR(255),
+  platformversion VARCHAR(255),
+  platformmachine VARCHAR(255),
+  platformcpu INTEGER DEFAULT 0,
+  platformmemory INTEGER DEFAULT 0,
+  platformswap INTEGER DEFAULT 0,
+  statusheartbeat INTEGER DEFAULT 1,
+  CONSTRAINT host_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE,
+  CONSTRAINT host_controlfilenameid_fk FOREIGN KEY(controlfilenameid) REFERENCES name(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE hostgroup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  CONSTRAINT hostgroup_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE groupedhost (
+  groupid INTEGER NOT NULL,
+  hostid  INTEGER NOT NULL,
+  PRIMARY KEY(groupid, hostid),
+  CONSTRAINT groupedhost_groupid_fk FOREIGN KEY(groupid) REFERENCES hostgroup(id) ON DELETE CASCADE,
+  CONSTRAINT groupedhost_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE
+);
+
+
+/* ---------------------------------------------------------- Service tables */
+
+
+CREATE TABLE service (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  status INTEGER NOT NULL, 
+  statushint INTEGER NOT NULL, 
+  monitoringstate INTEGER NOT NULL, 
+  monitoringmode INTEGER NOT NULL, 
+  onreboot INTEGER NOT NULL, 
+  statusmodified INTEGER DEFAULT 0,
+  everytype INTEGER DEFAULT 0,
+  everycyclenumber INTEGER DEFAULT 0,
+  everycyclecounter INTEGER DEFAULT 0,
+  everycron VARCHAR(255),
+  CONSTRAINT service_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT service_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+CREATE INDEX service_hostid_index ON service(hostid);
+
+
+CREATE TABLE servicegroup (
+  id INTEGER PRIMARY KEY,
+  nameid INTEGER NOT NULL,
+  hostid INTEGER NOT NULL,
+  CONSTRAINT servicegroup_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT servicegroup_nameid_fk FOREIGN KEY(nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+CREATE INDEX servicegroup_hostid_index ON servicegroup(hostid);
+
+
+CREATE TABLE groupedservices (
+  servicegroupid INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  PRIMARY KEY(servicegroupid, service_nameid),
+  CONSTRAINT groupedservices_servicegroupid_fk FOREIGN KEY(servicegroupid) REFERENCES servicegroup(id) ON DELETE CASCADE,
+  CONSTRAINT groupedservices_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+
+
+/* ------------------------------------------------------- Statistics tables */
+
+
+CREATE TABLE statistics (
+  id INTEGER PRIMARY KEY,
+  serviceid INTEGER NOT NULL,
+  type INTEGER NOT NULL,
+  datatype INTEGER NOT NULL,
+  descriptor VARCHAR(255),
+  CONSTRAINT statistics_serviceid_fk FOREIGN KEY(serviceid) REFERENCES service(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_serviceid_index ON statistics(serviceid);
+CREATE INDEX statistics_type_index ON statistics(type);
+
+
+CREATE TABLE statistics_string (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value TEXT,
+  CONSTRAINT statistics_string_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_string_statisticsid_index ON statistics_string(statisticsid);
+
+
+CREATE TABLE statistics_int (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value INTEGER,
+  CONSTRAINT statistics_int_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_int_statisticsid_index ON statistics_int(statisticsid);
+
+
+CREATE TABLE statistics_llong (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value INTEGER,
+  CONSTRAINT statistics_llong_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_llong_statisticsid_index ON statistics_llong(statisticsid);
+
+
+CREATE TABLE statistics_float (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value REAL,
+  CONSTRAINT statistics_float_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_float_statisticsid_index ON statistics_float(statisticsid);
+
+
+CREATE TABLE statistics_double (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value REAL,
+  CONSTRAINT statistics_double_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_double_statisticsid_index ON statistics_double(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_1m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_1m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_1m_statisticsid_index ON statistics_aggregate_1m(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_15m (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_15m_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_15m_statisticsid_index ON statistics_aggregate_15m(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_2h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_2h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_2h_statisticsid_index ON statistics_aggregate_2h(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_12h (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_12h_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_12h_statisticsid_index ON statistics_aggregate_12h(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_1d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_1d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_1d_statisticsid_index ON statistics_aggregate_1d(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_7d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_7d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_7d_statisticsid_index ON statistics_aggregate_7d(statisticsid);
+
+
+CREATE TABLE statistics_aggregate_14d (
+  statisticsid INTEGER,
+  collectedsec INTEGER NOT NULL,
+  value_avg REAL,
+  CONSTRAINT statistics_aggregate_14d_statisticsid_fk FOREIGN KEY(statisticsid) REFERENCES statistics(id) ON DELETE CASCADE
+);
+CREATE INDEX statistics_aggregate_14d_statisticsid_index ON statistics_aggregate_14d(statisticsid);
+
+
+CREATE TABLE statistics_events  (
+  timeframe INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  count INTEGER NOT NULL
+);
+CREATE INDEX statistics_events_state_index ON statistics_events(state);
+
+
+/* ------------------------------------------------------------ Event tables */
+
+
+CREATE TABLE event (
+  id INTEGER PRIMARY KEY,
+  hostid INTEGER NOT NULL,
+  serviceid INTEGER NOT NULL,
+  collectedsec INTEGER NOT NULL,
+  collectedusec INTEGER NOT NULL,
+  service_nameid INTEGER NOT NULL,
+  servicetype INTEGER NOT NULL,
+  event INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  hasnotice INTEGER,
+  active INTEGER,
+  CONSTRAINT event_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE,
+  CONSTRAINT event_serviceid_fk FOREIGN KEY(serviceid) REFERENCES service(id) ON DELETE CASCADE,
+  CONSTRAINT event_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+CREATE INDEX event_hostid_index ON event(hostid);
+CREATE INDEX event_serviceid_index ON event(serviceid);
+CREATE INDEX event_collectedsec_collectedusec_index ON event(collectedsec, collectedusec);
+CREATE INDEX event_service_nameid_index ON event(service_nameid);
+CREATE INDEX event_servicetype_index ON event(servicetype);
+CREATE INDEX event_state_index ON event(state);
+CREATE INDEX event_event_index ON event(event);
+CREATE INDEX event_active_index ON event(active);
+
+
+CREATE TABLE eventnotice (
+  eventid INTEGER NOT NULL,
+  date INTEGER NOT NULL,
+  uname VARCHAR(20) NOT NULL, 
+  notice TEXT NOT NULL,
+  CONSTRAINT eventnotice_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE,
+  CONSTRAINT eventnotice_uname_fk FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+CREATE INDEX eventnotice_eventid_index ON eventnotice(eventid);
+
+
+CREATE TABLE eventfilter (
+  eventid INTEGER,
+  uname VARCHAR(20) NOT NULL, 
+  CONSTRAINT eventfilter_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE,
+  CONSTRAINT eventfilter_uname_fk FOREIGN KEY(uname) REFERENCES users(uname) ON DELETE CASCADE
+);
+CREATE INDEX eventfilter_eventid_index ON eventfilter(eventid);
+CREATE INDEX eventfilter_uname_index ON eventfilter(uname);
+
+
+/* ------------------------------------------------------------- Rule tables */
+
+
+CREATE TABLE rule (
+  id INTEGER PRIMARY KEY,
+  created_at INTEGER,
+  updated_at INTEGER,
+  description VARCHAR(255),
+  active CHAR(1),
+  operator CHAR(1) DEFAULT 0
+);
+CREATE INDEX rule_active_index ON rule(active);
+
+
+CREATE TABLE rulerow (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  CONSTRAINT rulerow_ruleid_fk FOREIGN KEY(ruleid) REFERENCES rule(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE rulerowhost (
+  rulerowid INTEGER,
+  hostid INTEGER,
+  CONSTRAINT rulerowhost_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowhost_hostid_fk FOREIGN KEY(hostid) REFERENCES host(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE rulerowhostgroup (
+  rulerowid INTEGER,
+  hostgroupid INTEGER,
+  CONSTRAINT rulerowhostgroup_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowhostgroup_hostgroupid_fk FOREIGN KEY(hostgroupid) REFERENCES hostgroup(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE rulerowservice (
+  rulerowid INTEGER,
+  service_nameid INTEGER,
+  CONSTRAINT rulerowservice_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowservice_service_nameid_fk FOREIGN KEY(service_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE rulerowservicegroup (
+  rulerowid INTEGER,
+  servicegroup_nameid INTEGER,
+  CONSTRAINT rulerowservicegroup_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE,
+  CONSTRAINT rulerowservicegroup_servicegroup_nameid_fk FOREIGN KEY(servicegroup_nameid) REFERENCES name(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE rulerowstate (
+  rulerowid INTEGER,
+  eventstate INTEGER,
+  CONSTRAINT rulerowstate_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE rulerowevent (
+  rulerowid INTEGER,
+  eventid INTEGER,
+  CONSTRAINT rulerowevent_rulerowid_fk FOREIGN KEY(rulerowid) REFERENCES rulerow(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE actionrow (
+  id INTEGER PRIMARY KEY,
+  ruleid INTEGER NOT NULL,
+  action INTEGER NOT NULL,
+  repetition INTEGER DEFAULT 0,
+  CONSTRAINT actionrow_ruleid_fk FOREIGN KEY(ruleid) REFERENCES rule(id) ON DELETE CASCADE
+);
+CREATE INDEX actionrow_action_index ON actionrow(action);
+
+
+CREATE TABLE actionrowtarget (
+  actionrowid INTEGER NOT NULL,
+  target TEXT NOT NULL,
+  CONSTRAINT actionrowtarget_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE actionrowoption (
+  actionrowid INTEGER NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  value TEXT,
+  CONSTRAINT actionrowoption_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE actionqueue (
+  actionrowid INTEGER NOT NULL,
+  eventid INTEGER NOT NULL,
+  created_at INTEGER,
+  process_at INTEGER,
+  CONSTRAINT actionqueue_actionrowid_fk FOREIGN KEY(actionrowid) REFERENCES actionrow(id) ON DELETE CASCADE,
+  CONSTRAINT actionqueue_eventid_fk FOREIGN KEY(eventid) REFERENCES event(id) ON DELETE CASCADE
+);
+CREATE INDEX actionqueue_actionrowid_index ON actionqueue(actionrowid);
+CREATE INDEX actionqueue_eventid_index ON actionqueue(eventid);
+CREATE INDEX actionqueue_process_at_index ON actionqueue(process_at);
+
+
+/* ----------------------------------------------------- Notification tables */
+
+
+CREATE TABLE mailserver (
+  id INTEGER PRIMARY KEY,
+  hostname VARCHAR(255) NOT NULL,
+  port INTEGER NOT NULL,
+  uname VARCHAR(255), 
+  password VARCHAR(255),
+  usessl CHAR(1),
+  isdefault CHAR(1)
+);
+
+
+CREATE TABLE jabberserver (
+  id INTEGER PRIMARY KEY,
+  hostname VARCHAR(255) NOT NULL,
+  port INTEGER NOT NULL,
+  uname VARCHAR(255),
+  password VARCHAR(255),
+  isdefault CHAR(1)
+);
+
+
+CREATE TABLE messageformat (
+  id INTEGER PRIMARY KEY,
+  description VARCHAR(255),
+  sender VARCHAR(255),
+  subjectsingle VARCHAR(255), 
+  subjectmulti VARCHAR(255), 
+  txtheader TEXT, 
+  txtbody TEXT, 
+  txtfooter TEXT, 
+  htmlheader TEXT, 
+  htmlbody TEXT, 
+  htmlfooter TEXT, 
+  contenttype INTEGER,
+  isdefault CHAR(1)
+);
+
+
+CREATE TABLE messagequeue (
+  deferredsize INTEGER,
+  retry INTEGER,
+  minbackoff INTEGER,
+  maxbackoff INTEGER,
+  flush INTEGER,
+  maxmsgsize INTEGER,
+  maxmsgevents INTEGER
+);
+
+
+/* ----------------------------------- Persistent Alert message queue tables */
+
+
+CREATE TABLE message (
+  id INTEGER PRIMARY KEY,
+  type INTEGER, 
+  contenttype VARCHAR(255), 
+  sender VARCHAR(255),
+  subject VARCHAR(255),
+  body TEXT,
+  created INTEGER,
+  retry INTEGER
+);
+
+
+CREATE TABLE messagerecipients (
+  messageid INTEGER NOT NULL,
+  recipient VARCHAR(255) NOT NULL,
+  CONSTRAINT messagerecipients_message_fk FOREIGN KEY(messageid) REFERENCES message(id) ON DELETE CASCADE
+);
+
+
+/* ----------------------------------------------- Persistent SESSION tables */
+
+
+CREATE TABLE session (      
+  id VARCHAR(65) PRIMARY KEY, 
+  context varchar(255) NOT NULL,
+  ctime INTEGER NOT NULL,     
+  atime INTEGER NOT NULL,     
+  itime INTEGER NOT NULL,     
+  authtype VARCHAR(20),
+  principal varchar(255),
+  data BLOB
+);                 
+
+
+/* ------------------------------------------------------------ Initial Data */
+
+
+/*
+ * Populating with standard values 
+ */
+
+INSERT INTO mmonit (schemaversion, welcome, purgeevents, purgeanalytics, skew) VALUES (15, 1, 11, 10, 3);
+
+INSERT INTO roles VALUES ("admin", "The administrator role");
+INSERT INTO roles VALUES ("monit", "The standard user role");
+INSERT INTO users (uname, password, fullname, title) VALUES ("admin", "15B29FFDCE66E10527A65BC6D71AD94D", "Administrator", "M/Monit Administrator");
+INSERT INTO users (uname, password, fullname, title) VALUES ("monit", "D9CFD4AF77E33817DE2160E0C1C7607C", "Monit", "Default User");
+INSERT INTO userroles VALUES ("admin", "admin");
+INSERT INTO userroles VALUES ("admin", "monit");
+INSERT INTO userroles VALUES ("monit", "monit");
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, txtfooter, htmlheader, htmlbody, htmlfooter, contenttype, isdefault) VALUES (
+1,
+"Default",
+"mmonit@$HOST",
+"M/Monit report ($HOST: $EVENT $SERVICE on $DATE)",
+"M/Monit report ($COUNT events)",
+"Date:        $DATE
+Host:        $HOST
+Service:     $SERVICE
+Action:      $ACTION
+Description: $DESCRIPTION
+
+",
+"
+Your faithful employee,
+M/Monit",
+"<html>
+    <table style='border-collapse:collapse;border:1px solid #eee; padding:5px;'>
+        <tr>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Date</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Host</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Service</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Action</b></th>
+            <th style='border: 1px solid #eee; padding:5px;'><b>Description</b></th>
+        </tr>
+",
+"        <tr>
+            <td style='border: 1px solid #eee; padding:5px;'>$DATE</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$HOST</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$SERVICE</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$ACTION</td>
+            <td style='border: 1px solid #eee; padding:5px;'>$DESCRIPTION</td>
+        </tr>
+",
+"    </table>
+    <p>
+        Your faithful employee,<br>
+        M/Monit
+    </p>
+</html>",
+0,
+1);
+INSERT INTO messageformat (id, description, sender, subjectsingle, txtbody, contenttype, isdefault) VALUES (
+2,
+"Test",
+"mmonit@$HOST",
+"A test message from M/Monit",
+"If you can read this, then I can send you alerts. Your faithful employee, M/Monit",
+1,
+0);
+INSERT INTO messageformat (id, description, sender, subjectsingle, subjectmulti, txtbody, contenttype, isdefault) VALUES (
+3,
+"Message limit reached",
+"mmonit@$HOST",
+"M/Monit report ($HOST: $EVENT $SERVICE on $DATE)",
+"M/Monit report ($COUNT events)",
+"Message size limit reached, please see the M/Monit events log.
+
+Your faithful employee,
+M/Monit",
+1,
+0);
+INSERT INTO messagequeue (deferredsize, retry, minbackoff, maxbackoff, flush, maxmsgsize, maxmsgevents) VALUES (100, 10, 60, 3600, 30, 1048576, 100);
+

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Admin | Alerts</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <link rel="stylesheet" href="../../assets/admin/admin_alerts.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>
+                    <span>Alerts</span>
+                </h1>
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    <ul class="nav nav-tabs" id="tabs">
+                        <li class="selected"><a href="#rulesTab">Rules</a></li>
+                        <li><a href="#messageTab">Message<span class="hidden-phone"> settings</span></a></li>
+                        <li><a href="#mailTab">Mail<span class="hidden-phone"> servers</span></a></li>
+                        <li><a href="#jabberTab">Jabber<span class="hidden-phone"> servers</span></a></li>
+                    </ul>
+                </div>
+                <div class="span12">
+                    <div class="tab-content">
+                        <!-- rulesTab --> 
+                        <div class="tab-pane active" style="display:none;" id="rulesTab" data-bind="visible: true">
+                            <div class="titlerow">
+                                <button class="add-button" title="Add new rule" data-bind="event: {vclick: rules.add}, css: {disabled: $root.rules.createInProgress() }"></button>
+                                <span class="hidden-phone toright" data-bind="css:{'add-hint':rules.list().length == 0}"></span>
+                                <span>Setup alert rules for event notification. Only active rules are evaluated</span>
+                            </div>
+                            <div class="spinner tocenter localpushdown"></div>
+                            <!-- ko if: rules.list().length > 0 -->
+                                <ul class="tableView accordion" data-bind="foreach: rules.list">
+                                    <li class="list" data-bind="attr: { 'id': 'rule' + ruleid() }">
+                                        <div class="accordionRow" data-bind="event: { vclick: $root.rules.toggleExpand, mouseover: $root.rules.enableMouseover, mouseout: $root.rules.disableMouseover}, validationElement: description">
+                                            <span data-bind="visible: ! editing(), text: description, event: {vclick: edit}" class="editable-text"></span>
+                                            <input data-bind="visible: editing(), value: description, valueUpdate: 'afterkeydown', hasFocus: editing(), event: { blur: update }, onEnter: stopEdit, click: edit, clickBubble: false" placeholder="Rule name" type="text" maxlength="255" />
+                                            <span class="accessory" data-bind="css: {expanded: $root.rules.isExpanded($data)}"></span>
+                                            <label class="switch-button toright">
+                                                <input name="active" type="checkbox" data-bind="checked: active" />
+                                                <span data-bind="event: {vclick: toggleActive}"></span>
+                                            </label>
+                                            <button class="btn btn-mini btn-warning btn-save toright" data-bind="visible: ! ruleid(), event: {vclick: saveRule}">Save</button>
+                                            <button class="btn btn-mini btn-warning btn-update toright" data-bind="visible: (ruleid() && modified()), event: {vclick: updateRule}">Update</button>
+                                            <span class="ajaxProgress toright hidden-phone" data-bind="visible: ajaxInProgress()"><img src='../../img/spinner_small.gif' alt="spinner" height='12' width='12' /></span>
+                                        </div>
+                                        <div class="accordionPanel rules-controller" data-bind="slideVisible: $root.rules.isExpanded($data), slideDuration:300">
+                                            <div class="operator">
+                                                <span class="toright remove-button" title="Delete" data-target="#confirmRuleDelete" data-toggle="modal" data-bind="event: {vclick: $root.rules.confirmDelete}"></span>
+                                                <span>IF</span>
+                                                <div class="tableViewDropDown btn-group dropdown">
+                                                    <button class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+                                                        <div data-bind="text: operator2label($data)">Operator</div>
+                                                    </button>
+                                                    <ul class="dropdown-menu" data-bind="foreach: operator">
+                                                        <li data-bind="event: {vclick:$parent.selectOperator}, css:{checked:selected}">
+                                                            <span data-bind="text: name"></span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <span>of the following conditions are met:</span>
+                                            </div>
+                                            <div class="row-fluid">
+                                                <!-- ko foreach: {data: rulerows, afterRender: $root.handleRuleRowAfterRender} -->
+                                                <div class="span12 rulerow" data-bind="event: { mouseover: enableControlbox, mouseout: disableControlbox}">
+                                                    <div class="controlbox" data-bind="style: { visibility: controlboxEnabled() ? 'visible' : 'hidden'}">
+                                                        <span class="controller delete" data-bind="event: {vclick:$parent.deleteRuleRow}" title="Delete rule"></span>
+                                                        <span class="controller add" data-bind="event: {vclick:$parent.addRuleRow.bind($data, $index() + 1)}" title="Add rule"></span>
+                                                    </div>
+                                                    <div class="inputbox">
+                                                        <!-- host/hostgroup menu -->
+                                                        <div class="host tableViewMenu" data-bind="style: {width: $root.buttonWidth()}">
+                                                            <div class="btn" data-bind="event: {vclick: toggleHostsMenu}, style: {width: $root.buttonWidth()}">
+                                                                <span class="caret"></span>
+                                                                <span data-bind="text: hosts2label"></span>
+                                                            </div>
+                                                            <div class="callout popup">
+                                                                <div class="tableViewScroller">
+                                                                    <div class="tableViewTop current">
+                                                                        <ul class="tableView dark">
+                                                                            <li class="list" data-bind="event: {vclick: hostViewController.push}, css:{disabled:hosts().length == 0}">
+                                                                                <span>Hosts</span>
+                                                                                <span class="accessory"></span>
+                                                                                <div class="tableViewSubView">
+                                                                                    <div class="tableViewBar">
+                                                                                        <div>
+                                                                                            <div class="title">Hosts</div>
+                                                                                            <span class="backButton" data-bind="event: {vclick: hostViewController.pop}"></span>
+                                                                                            <span class="searchButton" data-bind="visible:hosts().length > 10, event: {vclick:toggleShowHostSearch}, css:{active:shouldShowHostSearch}"></span>
+                                                                                        </div>
+                                                                                        <div data-bind="slideVisible:shouldShowHostSearch, focuson:'.searchfield'">
+                                                                                            <input class="searchfield" placeholder="search hosts ..." type="search" data-bind="value: hostQuery, valueUpdate: ['keyup','search'], blurOnEnter: true" autocomplete="off" />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <ul class="tableView dark" data-bind="foreach: hosts">
+                                                                                        <!-- ko if: active() -->
+                                                                                            <li class="select" data-bind="event: {vclick:$parent.selectHost}, css:{checked:selected}">
+                                                                                                <span data-bind="text: name"></span>
+                                                                                                <span class="accessory"></span>
+                                                                                            </li>
+                                                                                        <!-- /ko -->
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </li>
+                                                                            <li class="list" data-bind="event: {vclick: hostViewController.push}, css:{disabled:hostgroups().length == 0}">
+                                                                                <span>Host groups</span>
+                                                                                <span class="accessory"></span>
+                                                                                <div class="tableViewSubView">
+                                                                                    <div class="tableViewBar">
+                                                                                        <div class="title">Host groups</div>
+                                                                                        <span class="backButton" data-bind="event: {vclick:hostViewController.pop}"></span>
+                                                                                    </div>
+                                                                                    <ul class="tableView dark" data-bind="foreach: hostgroups">
+                                                                                        <li class="select" data-bind="event: {vclick:$parent.selectHostGroup}, css:{checked:selected}">
+                                                                                            <span data-bind="text: name"></span>
+                                                                                            <span class="accessory"></span>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!-- service/servicegroup menu -->
+                                                        <div class="service tableViewMenu" data-bind="style: {width: $root.buttonWidth()}">
+                                                            <div class="btn" data-bind="event: {vclick: toggleServicesMenu}, style: {width: $root.buttonWidth()}">
+                                                                <span class="caret"></span>
+                                                                <span data-bind="text: services2label"></span>
+                                                            </div>
+                                                            <div class="callout popup">
+                                                                <div class="tableViewScroller">
+                                                                    <div class="tableViewTop current">
+                                                                        <ul class="tableView dark">
+                                                                            <li class="list" data-bind="event: {vclick: serviceViewController.push}, css:{disabled:Menu.countActive(services()) == 0}">
+                                                                                <span>Services</span>
+                                                                                <span class="accessory"></span>
+                                                                                <div class="tableViewSubView">
+                                                                                    <div class="tableViewBar">
+                                                                                        <div>
+                                                                                        <div class="title">Services</div>
+                                                                                            <span class="backButton" data-bind="event: {vclick:serviceViewController.pop}"></span>
+                                                                                            <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(services()) == services().length}, event: {vclick:$data.selectAllServices}"></span>
+                                                                                            <span class="searchButton" data-bind="visible:services().length > 10, event: {vclick:toggleShowServiceSearch}, css:{active:shouldShowServiceSearch}"></span>
+                                                                                        </div>
+                                                                                        <div data-bind="slideVisible:shouldShowServiceSearch, focuson:'.searchfield'">
+                                                                                            <input class="searchfield" placeholder="search services ..." type="search" data-bind="value: serviceQuery, valueUpdate: ['keyup','search'], blurOnEnter: true" autocomplete="off" />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <ul class="tableView dark multi" data-bind="foreach: services">
+                                                                                        <!-- ko if: active() -->
+                                                                                            <li class="select" data-bind="event: {vclick:$parent.selectService}, css:{checked:selected}">
+                                                                                                <span data-bind="text: name"></span>
+                                                                                                <span class="accessory"></span>
+                                                                                            </li>
+                                                                                        <!-- /ko -->
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </li>
+                                                                            <li class="list" data-bind="event: {vclick: serviceViewController.push}, css:{disabled:Menu.countActive(servicegroups()) == 0}">
+                                                                                <span>Service groups</span>
+                                                                                <span class="accessory"></span>
+                                                                                <div class="tableViewSubView">
+                                                                                    <div class="tableViewBar">
+                                                                                        <div class="title">Service groups</div>
+                                                                                        <span class="backButton" data-bind="event: {vclick:serviceViewController.pop}"></span>
+                                                                                        <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(servicegroups()) == servicegroups().length}, event: {vclick:$data.selectAllServiceGroups}"></span>
+                                                                                    </div>
+                                                                                    <ul class="tableView dark multi" data-bind="foreach: servicegroups">
+                                                                                        <!-- ko if: active() -->
+                                                                                            <li class="select" data-bind="event: {vclick:$parent.selectServiceGroup}, css:{checked:selected}">
+                                                                                                <span data-bind="text: name"></span>
+                                                                                                <span class="accessory"></span>
+                                                                                            </li>
+                                                                                        <!-- /ko -->
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!-- state menu -->
+                                                        <div class="state tableViewMenu" data-bind="style: {width: $root.buttonWidth()}">
+                                                            <div class="btn" data-bind="event: {vclick: toggleStatesMenu}, style: {width: $root.buttonWidth()}">
+                                                                <span class="caret"></span>
+                                                                <span data-bind="text: states2label"></span>
+                                                            </div>
+                                                            <div class="callout popup">
+                                                                <div class="tableViewScroller">
+                                                                    <div class="tableViewTop current">
+                                                                        <div class="tableViewBar">
+                                                                            <div class="title">States</div>
+                                                                            <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(states()) == states().length}, event: {vclick: $data.toggleSelection.bind($data, states, statesSelected)}"></span>
+                                                                        </div>
+                                                                        <ul class="tableView dark multi" data-bind="foreach: states">
+                                                                            <li class="select" data-bind="event: {vclick:$parent.selectState}, css:{checked:selected}">
+                                                                                <span data-bind="text: name"></span>
+                                                                                <span class="accessory"></span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!-- event menu -->
+                                                        <div class="event tableViewMenu" data-bind="style: {width: $root.buttonWidth()}">
+                                                            <div class="btn" data-bind="event: {vclick: toggleEventsMenu}, style: {width: $root.buttonWidth()}">
+                                                                <span class="caret"></span>
+                                                                <span data-bind="text: events2label"></span>
+                                                            </div>
+                                                            <div class="callout popup">
+                                                                <div class="tableViewScroller">
+                                                                    <div class="tableViewTop current">
+                                                                        <div class="tableViewBar">
+                                                                            <div class="title">Events</div>
+                                                                            <span class="selectAllButton" data-bind="css:{unSelectAllButton:Menu.countSelected(events()) == events().length}, event: {vclick: $data.toggleSelection.bind($data, events, eventsSelected)}"></span>
+                                                                        </div>
+                                                                        <ul class="tableView dark multi" data-bind="foreach: events">
+                                                                            <!-- ko if: active() -->
+                                                                                <li class="select" data-bind="event: {vclick:$parent.selectEvent}, css:{checked:selected}">
+                                                                                    <span data-bind="text: name"></span>
+                                                                                    <span class="accessory"></span>
+                                                                                </li>
+                                                                            <!-- /ko -->
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- /ko -->
+                                            </div>
+                        
+                                            <div style="margin-top:10px;">THEN perform the following actions:</div>
+                                            <div class="row-fluid">
+                                                <!-- ko foreach: actionrows -->
+                                                <div class="actionrow" data-bind="event: { mouseover: enableControlbox, mouseout: disableControlbox}">
+                                                    <div class="controlbox" data-bind="style: { visibility: controlboxEnabled() ? 'visible' : 'hidden'}">
+                                                        <span class="controller delete" data-bind="event: {vclick:$parent.deleteActionRow}" title="Delete action"></span>
+                                                        <span class="controller add" data-bind="event: {vclick:$parent.addActionRow.bind($data, $index() + 1)}" title="Add action"></span>
+                                                    </div>
+                                                    <div class="inputbox">
+                                                        <div class="inputtable">
+                                                            <div class="inputrow">
+                                                                <div class="inputcolumn">
+                                                                    <!-- action menu -->
+                                                                    <div class="action tableViewMenu" data-bind="style: {width: $root.buttonWidth()}">
+                                                                        <div class="btn" data-bind="event: {vclick: toggleActionMenu}, style: {width: $root.buttonWidth()}">
+                                                                            <span class="caret"></span>
+                                                                            <img class="warning" style="float:right;" src="../../img/warning.png" height="20" width="20" alt="warning" rel="tooltip" title="Server not defined" data-bind="visible: $parent.shouldShowWarning($data), event: { mouseover: $parent.displayWarning, mouseout: $parent.hideWarning, vclick: $parent.clickWarning }">
+                                                                            <span data-bind="text: action2label"></span>
+                                                                        </div>
+                                                                        <div class="callout popup">
+                                                                            <div class="tableViewScroller">
+                                                                                <div class="tableViewTop current">
+                                                                                    <ul class="tableView dark" data-bind="foreach: actions">
+                                                                                        <li class="select" data-bind="event: {vclick:$parent.selectAction}, css:{checked:selected}">
+                                                                                            <span data-bind="text: name"></span>
+                                                                                            <span class="accessory"></span>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div> <!-- inputcolumn -->
+                                                                <div class="inputcolumn">
+                                                                    <!-- user/target selection -->
+                                                                    <!-- ko if: actionSelected() == 0 || actionSelected() == 2 -->
+                                                                    <div class="user tableViewMenu" data-bind="style: {width: $root.buttonWidth()}">
+                                                                        <div class="btn" data-bind="event: {vclick: toggleUsersMenu}, style: {width: $root.buttonWidth()}">
+                                                                            <span class="caret"></span>
+                                                                            <span data-bind="text: user2label"></span>
+                                                                        </div>
+                                                                        <div class="callout popup">
+                                                                            <div class="tableViewScroller">
+                                                                                <div class="tableViewTop current">
+                                                                                    <div class="tableViewBar">
+                                                                                        <div class="title">Users</div>
+                                                                                        <span class="selectAllButton" data-bind="css:{unSelectAllButton:(Menu.countSelected(users()) + Menu.countDisabled(users())) == users().length}, event: {vclick: $data.toggleSelection.bind($data, users, usersSelected)}"></span>
+                                                                                    </div>
+                                                                                    <ul class="tableView dark multi" data-bind="foreach: users">
+                                                                                        <li class="select" data-bind="event: {vclick:$parent.selectUser}, css:{checked:selected, disabled:disabled}">
+                                                                                            <span data-bind="text: name"></span>
+                                                                                            <span class="accessory"></span>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <img class="info hidden-phone" src="../../img/info.png" height="24" width="24" alt="Message settings" data-bind="event: {vclick: $parent.togglePanel}">
+                                                                    <div class="popover fade right in" data-bind="template: { name: 'testmessage-template'}"></div>
+                                                                    <!-- /ko -->
+                                                                    <!-- ko if: actionSelected() == 1 -->
+                                                                    <input type="text" class="email input" data-bind="value: target, valueUpdate: 'afterkeydown', style: {width: $root.buttonWidth()}" placeholder="email..." />
+                                                                    <img class="info hidden-phone" src="../../img/info.png" height="24" width="24" alt="Message settings" data-bind="event: {vclick: $parent.togglePanel}">
+                                                                    <div class="popover fade right in" data-bind="template: { name: 'testmessage-template'}"></div>
+                                                                    <!-- /ko -->
+                                                                    <!-- ko if: actionSelected() == 3 -->
+                                                                    <input type="text" class="jabber input field" data-bind="value: target, valueUpdate: 'afterkeydown', style: {width: $root.buttonWidth()}" placeholder="jabber name..." />
+                                                                    <img class="info hidden-phone" src="../../img/info.png" height="24" width="24" alt="Message settings" data-bind="event: {vclick: $parent.togglePanel}">
+                                                                    <div class="popover fade right in" data-bind="template: { name: 'testmessage-template'}"></div>
+                                                                    <!-- /ko -->
+                                                                    <!-- ko if: actionSelected() == 4 -->
+                                                                    <input type="text" class="program input" data-bind="value: target, valueUpdate: 'afterkeydown', style: {width: $root.buttonWidth()}" placeholder="program..." />
+                                                                    <img class="info hidden-phone" src="../../img/info.png" height="24" width="24" alt="Program settings" data-bind="event: {vclick: $parent.togglePanel}">
+                                                                    <div class="popover fade right in">
+                                                                        <div class="arrow"></div>
+                                                                        <h3 class="popover-title">Program settings</h3>
+                                                                        <div class="popover-content">
+                                                                            <ul>
+                                                                              <li>
+                                                                                  <label>
+                                                                                      Variables to be set in the environment: (name=value;name=value;...)
+                                                                                      <input type="text" name="environment" id="environment" class="input field" data-bind="value:option" />
+                                                                                  </label>
+                                                                              </li>
+                                                                              <li class="testinput">
+                                                                                  <label>
+                                                                                      Program:
+                                                                                      <textarea name="target" rows="4" cols="60" class="input field" data-bind="value:target, valueUpdate: 'afterkeydown'"></textarea>
+                                                                                  </label>
+                                                                              </li>
+                                                                              <li class="testoutput">
+                                                                                  <label>
+                                                                                      Test output:
+                                                                                      <textarea name="testoutputarea" rows="4" cols="60" disabled="disabled" placeholder="Press Test to run the program..." class="input field"></textarea>
+                                                                                  </label>
+                                                                              </li>
+                                                                              <li class="separator">
+                                                                                  <button class="btn" data-bind="event: {vclick: $parent.togglePanel}">Close</button>
+                                                                                  <button class="btn btn-primary" data-bind="event: {vclick: testProgram}">Test</button>
+                                                                              </li>
+                                                                            </ul>
+                                                                        </div>
+                                                                    </div>
+                                                                    <!-- /ko -->
+                                                                </div> <!-- inputcolumn -->
+                                                            </div> <!-- inputrow -->
+                                                        </div> <!-- inputtable -->
+                                                    </div> <!-- inputbox -->
+                                                </div>
+                                                <!-- /ko -->
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            <!-- /ko -->
+                            <!-- rulesTab: delete dialog -->
+                            <div id="confirmRuleDelete" class="modal hide" data-bind="with: rules.rule">
+                                <div class="modal-body">
+                                    <h2>Delete <span class="text-error" data-bind='text: description'></span>?</h2>
+                                    <p>Are you sure you want to delete this rule? There is no undo.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn" data-dismiss="modal" data-bind="event: {vclick: cancelRule}">Cancel</button>
+                                    <button class="btn btn-danger" data-dismiss="modal" data-bind="event: {vclick: deleteRule}">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /rulesTab -->
+
+                        <!-- messageTab -->
+                        <div class="tab-pane" style="display:none;" id="messageTab" data-bind="visible: true">
+                            <div class="row-fluid">
+                                <div class="span12">
+                                    <h3>Message content</h3>
+                                    <ul class="tableView">
+                                        <li class="messageFormat" data-bind="validationElement: message.format.sender">
+                                            <span>Sender</span>
+                                            <span class="accessory">
+                                                <input name="sender" type="text" autocomplete="off" size="255" data-bind="value: message.format.sender" />
+                                            </span>
+                                        </li>
+                                        <li class="tableViewDropDown">
+                                            <span>Content format</span>
+                                            <span class="accessory">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+                                                        <span class="caret"></span>
+                                                        <div data-bind="html: message.format.contenttype.label">Select format</div>
+                                                    </button>
+                                                    <ul class="dropdown-menu" data-bind="css: {'pull-right': ISTABLET}, foreach: message.format.contenttype.menu">
+                                                        <li data-bind="event: {vclick:$root.message.format.contenttype.select}, css:{checked:selected}">
+                                                            <span data-bind="html: name"></span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </span>
+                                        </li>
+                                        <li class="tableViewDropDown">
+                                            <span>Maximum events</span>
+                                            <span class="accessory">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+                                                        <span class="caret"></span>
+                                                        <div data-bind="html: message.format.maxevents.label">Select limit</div>
+                                                    </button>
+                                                    <ul class="dropdown-menu" data-bind="css: {'pull-right': ISTABLET}, foreach: message.format.maxevents.menu">
+                                                        <li data-bind="event: {vclick:$root.message.format.maxevents.select}, css:{checked:selected}">
+                                                            <span data-bind="html: name"></span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="row-fluid">
+                                <div class="span12">
+                                    <h3>Alert aggregation</h3>
+                                    <ul class="tableView">
+                                        <li class="tableViewDropDown">
+                                            <span>Interval</span>
+                                            <span class="accessory">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+                                                        <span class="caret"></span>
+                                                        <div data-bind="html: message.queue.flushinterval.label">Select time frame</div>
+                                                    </button>
+                                                    <ul class="dropdown-menu" data-bind="css: {'pull-right': ISTABLET}, foreach: message.queue.flushinterval.menu">
+                                                        <li data-bind="event: {vclick:$root.message.queue.flushinterval.select}, css:{checked:selected}">
+                                                            <span data-bind="html: name"></span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /messageTab -->
+
+                        <!-- mailTab -->
+                        <div class="tab-pane" style="display:none;" id="mailTab" data-bind="visible: true">
+                            <div class="titlerow">
+                                <button class="add-button" title="Add new mailserver" data-bind="event: {vclick: mailservers.add}, css: {disabled: $root.mailservers.createInProgress() }"></button>
+                                <span class="hidden-phone toright" data-bind="css:{'add-hint':mailservers.list().length == 0}"></span>
+                                <span>Setup mailservers for event notification.</span>
+                            </div>
+                            <!-- ko if: mailservers.list().length > 0 -->
+                                <ul class="tableView accordion" data-bind="foreach: mailservers.list">
+                                    <li class="list" data-bind="attr: { 'id': 'mailserver' + id() }">
+                                        <div class="accordionRow" data-bind="event: { vclick: $root.mailservers.toggleExpand, mouseover: $root.mailservers.enableMouseover, mouseout: $root.mailservers.disableMouseover}, validationElement: hostname">
+                                            <span data-bind="visible: ! editing(), text: hostname, event: {vclick: edit}" class="editable-text"></span>
+                                            <input data-bind="visible: editing(), value: hostname, valueUpdate: 'afterkeydown', hasFocus: editing(), event: { blur: stopEdit }, onEnter: stopEdit, click: edit, clickBubble: false" placeholder="Server Hostname or IP..." type="text" maxlength="255" />
+                                            <span class="accessory" data-bind="css: {expanded: $root.mailservers.isExpanded($data)}"></span>
+                                            <div class="toright remove-button" title="Delete" data-target="#confirmMailserverDelete" data-toggle="modal" data-bind="visible: mouseover(), event: {vclick: $root.mailservers.confirmDelete}"></div>
+                                        </div>
+                                        <div class="accordionPanel mailservers-controller" data-bind="slideVisible: $root.mailservers.isExpanded($data), slideDuration:300">
+                                            <ul>
+                                                <li data-bind="validationElement: port">
+                                                    <span>Server port</span>
+                                                    <span class="accessory">
+                                                        <input placeholder="Port..." class="mailPort" type="text" size="6" autocomplete="off" data-bind="value: port" />
+                                                    </span>
+                                                </li>
+                                                <li>
+                                                    <span class="valign-middle">Enable SSL</span>
+                                                    <span class="accessory valign-middle">
+                                                        <label class="switch-button toright">
+                                                            <input name="mailusessl" type="checkbox" data-bind="checked: enableSSL" />
+                                                            <span data-bind="event: {vclick: toggleSSL}"></span>
+                                                        </label>
+                                                    </span>
+                                                </li>
+                                                <li>
+                                                    <span>Authentication</span>
+                                                    <span class="accessory">
+                                                        <label class="switch-button toright">
+                                                            <input name="mailauthentication" type="checkbox" data-bind="checked: enableAuthentication" />
+                                                            <span data-bind="event: {vclick: toggleAuthentication}"></span>
+                                                        </label>
+                                                    </span>
+                                                </li>
+                                            </ul>
+                                            <ul data-bind="slideVisible: enableAuthentication(), slideDuration:300">
+                                                <li data-bind="validationElement: username">
+                                                    <span>Username</span>
+                                                    <span class="accessory">
+                                                        <input placeholder="Username..." class="mailUser" type="text" size="128" autocomplete="off" data-bind="value: username" />
+                                                    </span>
+                                                </li>
+                                                <li data-bind="validationElement: password">
+                                                    <span>Password</span>
+                                                    <span class="accessory">
+                                                        <input placeholder="Password..." class="mailPassword" type="password" size="128" autocomplete="off" data-bind="value: password" />
+                                                    </span>
+                                                </li>
+                                            </ul>
+                                            <ul class="testResult" data-bind="slideVisible: showTestResult(), slideDuration:300">
+                                                <li>
+                                                    <span>Status</span>
+                                                    <span class="accessory"></span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                </ul>
+                            <!-- /ko -->
+                            <!-- mailTab: delete dialog -->
+                            <div id="confirmMailserverDelete" class="modal hide" data-bind="with: mailservers.mailserver">
+                                <div class="modal-body">
+                                    <h2>Delete <span class="text-error" data-bind='text: hostname'></span>?</h2>
+                                    <p>Are you sure you want to remove this mail server? There is no undo.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn" data-dismiss="modal">Cancel</button>
+                                    <button class="btn btn-danger" data-dismiss="modal" data-bind="event: {vclick:$root.mailservers.remove}">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /mailTab -->
+
+                        <!-- jabberTab -->
+                        <div class="tab-pane" style="display:none;" id="jabberTab" data-bind="visible: true">
+                            <div class="titlerow">
+                                <button class="add-button" title="Add new jabber server" data-bind="event: {vclick: jabberservers.add}, css: {disabled: $root.jabberservers.createInProgress() }"></button>
+                                <span class="hidden-phone toright" data-bind="css:{'add-hint':jabberservers.list().length == 0}"></span>
+                                <span>Setup jabber servers for event notification.</span>
+                            </div>
+                            <!-- ko if: jabberservers.list().length > 0 -->
+                                <ul class="tableView accordion" data-bind="foreach: jabberservers.list">
+                                    <li class="list" data-bind="attr: { 'id': 'jabberserver' + id() }">
+                                        <div class="accordionRow" data-bind="event: { vclick: $root.jabberservers.toggleExpand, mouseover: $root.jabberservers.enableMouseover, mouseout: $root.jabberservers.disableMouseover}, validationElement: hostname">
+                                            <span data-bind="visible: ! editing(), text: hostname, event: {vclick: edit}" class="editable-text"></span>
+                                            <input data-bind="visible: editing(), value: hostname, valueUpdate: 'afterkeydown', hasFocus: editing(), event: { blur: stopEdit }, onEnter: stopEdit, click: edit, clickBubble: false" placeholder="Server Hostname or IP..." type="text" maxlength="255" />
+                                            <span class="accessory" data-bind="css: {expanded: $root.jabberservers.isExpanded($data)}"></span>
+                                            <div class="toright remove-button" title="Delete" data-target="#confirmJabberserverDelete" data-toggle="modal" data-bind="visible: mouseover(), event: {vclick: $root.jabberservers.confirmDelete}"></div>
+                                        </div>
+                                        <div class="accordionPanel jabberservers-controller" data-bind="slideVisible: $root.jabberservers.isExpanded($data), slideDuration:300">
+                                            <ul>
+                                                <li data-bind="validationElement: port">
+                                                    <span>Server port</span>
+                                                    <span class="accessory">
+                                                        <input placeholder="Port..." class="jabberPort" type="text" size="6" autocomplete="off" data-bind="value: port" />
+                                                    </span>
+                                                </li>
+                                                <li data-bind="validationElement: username">
+                                                    <span>Username (JID)</span>
+                                                    <span class="accessory">
+                                                        <input placeholder="Username..." class="jabberUser" type="text" size="128" autocomplete="off" data-bind="value: username" />
+                                                    </span>
+                                                    </li>
+                                                <li data-bind="validationElement: password">
+                                                    <span>Password</span>
+                                                    <span class="accessory">
+                                                        <input placeholder="Password..." class="jabberPassword" type="password" size="128" autocomplete="off" data-bind="value: password" />
+                                                    </span>
+                                                </li>
+                                            </ul>
+                                            <ul class="testResult" data-bind="slideVisible: showTestResult(), slideDuration:300">
+                                                <li>
+                                                    <span>Status</span>
+                                                    <span class="accessory"></span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                </ul>
+                            <!-- /ko -->
+                            <!-- jabberTab: delete dialog -->
+                            <div id="confirmJabberserverDelete" class="modal hide" data-bind="with: jabberservers.jabberserver">
+                                <div class="modal-body">
+                                    <h2>Delete <span class="text-error" data-bind='text: hostname'></span>?</h2>
+                                    <p>Are you sure you want to remove this jabber server? There is no undo.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn" data-dismiss="modal">Cancel</button>
+                                    <button class="btn btn-danger" data-dismiss="modal" data-bind="event: {vclick:$root.jabberservers.remove}">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /jabberTab -->
+                    </div> <!-- tab-content -->
+                </div> <!-- span12 -->
+            </div> <!-- row-fluid -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <!-- Help -->
+    <div id="helpbox">
+        <!-- ko if: currentTab() === 'rulesTab' -->
+        <div class="title">
+            <h2>Rules Help</h2>
+        </div>
+        <div class="content paragraphify">
+            <p>
+                When an event message is received from Monit, M/Monit will check the event against a list of user defined rules and if a match is found, the
+                action defined for the rule is executed.
+            </p>
+            <p>
+                This page list all rules defined in M/Monit. In the list, a switch is used to indicate if a Rule is active or not (the switch is blue when
+                active). M/Monit will only test incoming events against active rules, non-active rules are ignored.
+            </p>
+            <p>
+                The rule list can be perceived as a sieve, events are sifted through and only events that match a rule, produces an action
+            </p>
+            <h3>
+                 New Rule
+            </h3>
+            <p>
+                To add a new rule, click the <i class="icon-plus"></i> button. To edit an existing rule click the rule row in the table.
+                To change the name of a rule, click the name and edit it inline. Press Enter or click outside when done.
+            </p>
+            <h3>
+                Conditions
+            </h3>
+            <p>
+                A Rule is specified as an <i>if-then</i> statement. A rule evaluates to true if condition(s) matches the incoming event. A condition
+                is a tuple of [Host/Group, Service/Group, Event State and Event Type]. This can be read as: If the event originated from a certain
+                host and for a certain service and with a specific event state and type, then the condition match. 
+            </p>
+            <p>
+                Whether the condition triggers or suppresses an action is decided by the <i>any/none</i> selector. If set to <i>any</i> (the
+                default), then any matching tuple triggers the action. If it is set to <i>none</i>, then the tuples serve as an exclusive list and
+                any non-matching event will trigger the action.
+            </p>
+            <p>
+                For instance, to get a notification when a service failed and a notification when the service comes back up again, create one condition row with
+                [Host, Service, Failed + Succeed, Any]. A row of [Any Host, Any Service, Any State, Any Event] is a "catch all" condition and will generate an
+                alert message for every event.
+            </p>
+			<h4>Event Types</h4>
+			<p>
+				The following <strong>event types</strong> are available and can be used to setup alerts for events you are interested in and
+				to ignore or filter out other events.
+			</p>
+			<table class="table table-hover table-bordered">
+				<thead>
+					<tr>
+						<th class="span3">Event Types</th>
+						<th class="span9">Description</th>
+					</tr>
+				</thead>
+				<tr>
+					<td>Action</td>
+					<td>
+                        This is the event sent when you select a service and click one of the action buttons in the Host's Detailed status page or if
+                        someone on the Monit host performs a service action from the command line, such as start, stop or restart a service.
+                    </td>
+				</tr>
+				<tr>
+					<td>Checksum</td>
+					<td>A file checksum mismatch or file was changed</td>
+				</tr>
+				<tr>
+					<td>Connection</td>
+					<td>TCP/UDP connection or UNIX socket test failed</td>
+				</tr>
+				<tr>
+					<td>Content</td>
+					<td>File content test found a match</td>
+				</tr>
+				<tr>
+					<td>Data</td>
+					<td>Sent if Monit cannot read service data. E.g. cannot get filesystem usage</td>
+				</tr>
+				<tr>
+					<td>Execution</td>
+					<td>Execution of a service related script failed. E.g. start or exec failed</td>
+				</tr>
+				<tr>
+					<td>Existence</td>
+					<td>Fired if a service existence change. E.g. process is not running or filesystem does not exist</td>
+				</tr>
+				<tr>
+					<td>Filesystem flags</td>
+					<td>Filesystem flags changed</td>
+				</tr>
+				<tr>
+					<td>GID</td>
+					<td>A GID test failed. E.g. file owned by different group</td>
+				</tr>
+				<tr class="info">
+					<td>Monit heartbeat</td>
+					<td>If Monit fails to report its status within a given timelimit. The Host, the network or Monit might have failed</td>
+				</tr>
+				<tr>
+					<td>Monit instance</td>
+					<td>Monit itself was started, stopped or reloaded</td>
+				</tr>
+				<tr>
+					<td>Permissions</td>
+					<td>A permission test failed. E.g. file mode doesn't match</td>
+				</tr>
+				<tr>
+					<td>PID</td>
+					<td>A process' PID (Process Identifer) changed outside of Monit's control. E.g. someone restarted Apache directly</td>
+				</tr>
+				<tr>
+					<td>Ping</td>
+					<td>Sent if a host's network ping test failed</td>
+				</tr>
+				<tr>
+					<td>PPID</td>
+					<td>A process' Parent PID changed outside Monit's control</td>
+				</tr>
+				<tr>
+					<td>Resource limit</td>
+					<td>A service's resource limit test match. E.g. CPU usage > 60% or file system space usage > 80%</td>
+				</tr>
+				<tr>
+					<td>Size</td>
+					<td>A file object size test failed. E.g. file is larger than X MB</td>
+				</tr>
+				<tr>
+					<td>Status</td>
+					<td>The exit value from a program test failed</td>
+				</tr>
+				<tr>
+					<td>Timeout</td>
+					<td>A service test timed out</td>
+				</tr>
+				<tr>
+					<td>Timestamp</td>
+					<td>A timestamp test failed. E.g. file is older then expected</td>
+				</tr>
+				<tr>
+					<td>UID</td>
+					<td>An UID test failed. E.g. file owned by different user</td>
+				</tr>
+				<tr>
+					<td>Uptime</td>
+					<td>A process uptime test matched. E.g. get an alert if uptime is more than a year</td>
+				</tr>
+				<tr>
+					<td>Valid type</td>
+					<td>Sent if an object exist, but no longer is of a valid type. E.g. a fifo object was replaced with a regular file object of the same name</td>
+				</tr>
+			</table>
+			
+            <h3>
+                Actions
+            </h3>
+            <p>
+                What M/Monit should do when a rule evaluates to true is specified in one or more actions. M/Monit currently supports sending email, sending
+                Jabber/GTalk message and execute a program or a script as an action.
+            </p>
+            <p>
+                <b>Email</b>. The mail server M/Monit should use for sending email is specified in the admin <a target="webapp"
+                href="../../admin/alerts/?tab=mailTab">Mail servers</a> page. There are two ways to specify email notification. Either by selecting a user
+                registered in M/Monit or by specifying an email address directly. The [Send mail to user] drop-down target menu contains all <a target="webapp"
+                href="../users/">users</a> in M/Monit. Disabled users in that list are those who do not have an email.
+            </p>
+            <p>
+                <b>Jabber/GTalk</b>. The Jabber server M/Monit should use for sending Jabber messages is specified
+                in the admin <a target="webapp" href="../../admin/alerts/?tab=jabberTab">Jabber servers</a> page. There are two ways to specify
+                Jabber notification. Either by selecting a user registered in M/Monit or by specifying a Jabber address
+                directly. The [Send instant message to user] drop-down target menu contains all <a target="webapp" href="../users/">users</a>
+                in M/Monit. Users with no GTalk or Jabber address are disabled in that menu.
+            </p>
+            <p>    
+                <b>Test</b>. You can send a test Email or a Jabber message to selected users/addresses to verify that M/Monit can send an alert. Click the <img
+                src="../../img/info.png" height="16" width="16" alt="Message settings"> icon to the right of the input field. This will pop up a panel from where
+                you can send a test message.
+            </p>
+            <p>    
+                <b>Reminder</b>. M/Monit will usually only send one alert if a service fails and not continue to send alerts as long as the service is in the same error
+                state. Sometimes, it can be useful to get a reminder if a service continue to stay in the same error state. Click the <img src="../../img/info.png"
+                height="16" width="16" alt="Message settings"> icon to the right of the input field, a panel will popup from where you can setup the reminder alert.
+            </p>
+            <p>
+                <b>Program</b>. The program M/Monit should execute is specified in the input field. The program is executed by M/Monit using <code>/bin/sh</code>. You can
+                therefor write a shell script directly into the input field or you can simply call an external program. If you want to test the program first or if you need
+                to set specific environment variables for the program, click the <img src="../../img/info.png" height="16" width="16" alt="Program settings"> icon to the
+                right of the input field. This will pop up a panel where you can add environment variables as well as test and check that your program does not return any
+                errors when executed by M/Monit.
+            </p>
+            <p>
+                 A set of environment variables are made available to the program at execution time, describing the event that occurred:
+            </p>
+            <ul>
+                <li>$MONIT_EVENT: A short string describing the event that occurred</li>
+                <li>$MONIT_SERVICE: The name of the service generating the event</li>
+                <li>$MONIT_DATE: The date and time the event occurred</li>
+                <li>$MONIT_HOST: The name of the Monit Host the event originated from</li>
+                <li>$MONIT_ACTION: The name of the action which was performed by Monit</li>
+                <li>$MONIT_DESCRIPTION: A description of the event condition. I.e. why the event was sent</li>
+            </ul>
+        </div>
+        <!-- /ko -->
+        <!-- ko if: currentTab() === 'messageTab' -->
+        <div class="title">
+            <h2>Message Settings Help</h2>
+        </div>
+        <div class="content paragraphify">
+            <h3>Message content</h3>
+            <div>
+                <p>
+                    Specify the <strong>Sender</strong> to be used in Email alerts sent from M/Monit (from: address). Use a name@domain format where domain exist in DNS.
+                    Name can be any name and does not need to refer to a real user. <strong>Content format</strong> can be one of the following types:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Plaintext</strong>, A simple plain text message. Each event is described in a set of lines. Jabber messages are always sent in this format
+                    </li>
+                    <li>
+                        <strong>HTML</strong>, Events are formatted into a simple HTML table - one row per event
+                    </li>
+                    <li>
+                        <strong>Multipart</strong> (default), The message will contain both alternatives: the plaintext and the HTML version. A mail client will display
+                        either the HTML or the plaintext version based on its abilities and preferences
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <strong>Maximum events</strong> per message can be set to limit the number and size of a message. If this limit is reached, the alert message will just
+                contain information about the events count and refer the user to M/Monit’s event log for more details.
+            </div>
+            <h3>Alert aggregation</h3>
+            <p>
+                M/Monit can aggregate alerts within a given interval before before sending a message. Trading immediate notification with aggregation can be useful if you
+                feel that you are receiving too many alerts. Instead of getting, for instance, 10 separate messages, you will instead get one message with 10 alerts. If no
+                aggregation is selected, M/Monit will send an alert message as soon as an event is received. </p>
+        </div>
+        <!-- /ko -->
+        <!-- ko if: currentTab() === 'mailTab' -->
+        <div class="title">
+            <h2>Mail Servers Help</h2>
+        </div>
+        <div class="content paragraphify">
+            <p>
+                Specify SMTP servers M/Monit should use for alert notification.
+            </p>
+            <p>
+                To add a new server, click the <i class="icon-plus"></i> button and fill in all fields. The entry is saved automatically when values are
+                filled. To edit an existing server, just expand its entry and modify the fields (changes are saved automatically).
+            </p>
+            <p>
+                If [Enable SSL] is on, M/Monit will use <i>SMTPS</i>, unless the mail server port number is 25 or 587 in which case <i>STARTTLS</i> is used.
+            </p>
+            <h3>Automatic connection testing</h3>
+            <p>
+                Whenever a new mail server is added or information is updated, M/Monit will test and verify that a connection can be established to the server and that the
+                sender’s address will be accepted. No message is sent during this test.
+            </p>
+            <h3>Message delivery</h3>
+            <p>
+                When sending an alert message, M/Monit will use the first SMTP server in the list and if not available, continue with the next and so on, until the message
+                is sent or all servers failed.
+            </p>
+        </div>
+        <!-- /ko -->
+        <!-- ko if: currentTab() === 'jabberTab' -->
+        <div class="title">
+            <h2>Jabber Servers Help</h2>
+        </div>
+        <div class="content paragraphify">
+            <p>
+                Specify Jabber servers M/Monit should use for alert notification.
+            </p>
+            <p>
+                To add a new server, click the <i class="icon-plus"></i> button and fill in all fields. The entry is saved automatically when values are
+                filled. To edit an existing server, just expand its entry and modify the fields (changes are saved automatically).
+            </p>
+            <p>
+                If you use GTalk, the server name should be <em>talk.google.com</em>, the port number <em>5222</em>, and the username and password should be your gmail.com
+                address and password
+            </p>
+            <p>
+                If the port number is 5223 M/Monit will connect using <i>SSL/TLS</i> otherwise it will switch to a secure connection and use <i>STARTTLS</i> if
+                required by the server. The default jabber port number is 5222 and if in doubt, use that number.
+            </p>
+            <p>
+                Username (Jabber ID) and password are required and identify the user who will send the alert message.
+            </p>
+            <p>
+                Note that the user you specify here <em>should be different</em> from the one you will use in your jabber client. Otherwise the jabber server will think
+                that you are sending messages to yourself and won't deliver the alert message to your client. We recommend using a dedicated Jabber user for M/Monit.
+            </p>
+            <h3>Automatic connection testing</h3>
+            <p>
+                Whenever a new Jabber server is added or information is updated, M/Monit will test and verify that a connection can be established to the server. No message
+                is sent during this test.
+            </p>
+            <h3>Message delivery</h3>
+            <p>
+                When sending an alert message, M/Monit will use the first Jabber server in the list and if not available, continue with the next and so on, until the
+                message is sent or all servers failed.
+            </p>
+        </div>
+        <!-- /ko -->
+    </div>
+    <script type="text/html" id="testmessage-template">
+        <div class="arrow"></div>
+        <h3 class="popover-title">Message settings</h3>
+        <div class="popover-content">
+            <ul>
+                <li class="repetition">
+                    <label>
+                        Send reminder if the error persists:
+                        <div class="btn-group btn-reminder">
+                            <button class="btn btn-block dropdown-toggle" data-toggle="dropdown">
+                                <span class="caret"></span>
+                                <div data-bind="text: $parent.repetition2label($data)"></div>
+                            </button>
+                            <ul class="dropdown-menu" data-bind="foreach: repetition">
+                                <li data-bind="click: $parent.selectRepetition, css: {checked: selected}">
+                                    <span data-bind="html: name"></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </label>
+                </li>
+                <li class="testoutput">
+                    <label>
+                        Test output:
+                        <textarea name="testoutputarea" rows="4" cols="60" disabled="disabled" placeholder="Press Test to send a test message..." class="input field"></textarea>
+                    </label>
+                </li>
+                <li class="separator">
+                    <button class="btn" data-bind="event: {vclick: $parent.togglePanel}">Close</button>
+                    <button class="btn btn-primary" data-bind="click: testMessage">Test</button>
+                </li>
+            </ul>
+        </div>
+    </script>
+    <script src="../../lib/f/yui/2/utilities/utilities.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.validation.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/math.js?version=372"></script>
+    <script src="../../lib/js/ui.js?version=372"></script>
+    <script src="../../lib/js/menu.js?version=372"></script>
+    <script src="../../lib/js/tableview.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/admin/admin_alerts_rules.js?version=372"></script>
+    <script src="../../assets/admin/admin_alerts_message.js?version=372"></script>
+    <script src="../../assets/admin/admin_alerts_mail.js?version=372"></script>
+    <script src="../../assets/admin/admin_alerts_jabber.js?version=372"></script>
+    <script src="../../assets/admin/admin_alerts.js?version=372"></script>
+</body>
+</html>

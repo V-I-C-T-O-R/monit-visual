@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Differential patch for M/Monit database schema version 14 to 15 -->
+
+<patch>
+
+<!-- sqlite -->
+
+<statements type="sqlite">
+
+<statement>
+PRAGMA foreign_keys=ON;
+</statement>
+<statement>
+DELETE FROM statistics WHERE type=25;
+</statement>
+<statement>
+CREATE TABLE statistics_events  (
+  timeframe INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  count INTEGER NOT NULL
+);
+</statement>
+<statement>
+CREATE INDEX statistics_events_state_index ON statistics_events(state);
+</statement>
+<statement>
+VACUUM;
+</statement>
+
+</statements>
+
+
+<!-- mysql -->
+
+<statements type="mysql">
+
+<statement>
+DELETE FROM statistics WHERE type=25;
+</statement>
+<statement>
+CREATE TABLE statistics_events  (
+  timeframe INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  count INTEGER NOT NULL,
+  INDEX statistics_events_state_index (state)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</statement>
+</statements>
+
+
+<!-- postgresql -->
+
+<statements type="postgresql">
+
+<statement>
+DELETE FROM statistics WHERE type=25;
+</statement>
+<statement>
+CREATE TABLE statistics_events  (
+  timeframe INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  count INTEGER NOT NULL
+);
+</statement>
+<statement>
+CREATE INDEX statistics_events_state_index ON statistics_events(state);
+</statement>
+
+</statements>
+
+</patch>
+

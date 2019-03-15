@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Admin | Users</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <style type="text/css">
+        @media (min-width: 768px) { 
+            li.span4 {padding-bottom:21px;display:inline-block;}
+            li:nth-child(3n+4).span4 {margin-left:0;} 
+        }
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp"><span>Dashboard</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../status/hosts/"><span>Status</span></a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/"><span>Reports</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../admin/general/"><span>Admin</span></a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="edit" id="crud" target="webapp" class="add-button" title="Add new User"></a>
+                <span class="hidden-phone crud add-hint"></span>
+                <h1>
+                    Users
+                </h1>
+            </div>
+            <div class="visible-phone tocenter gap bottom" >
+                <input class="searchfield" style="width:75%" placeholder="Find User..." autocomplete="off"
+                data-bind="value: query, valueUpdate: 'keyup'"
+                >
+            </div>
+            <ul data-bind="foreach: accounts" class="row-fluid unstyled">
+                <li class="span4">
+                    <ul class="tableView transparent">
+                        <li class="image cursor-pointer" data-bind="click:$root.edit" style="position:relative">
+                            <img data-bind="attr: {src:image}" alt="Click to Edit" onerror="this.onerror=null;this.src='../../img/avatar.png';">
+                        </li>
+                        <li class="center-text">
+                            <strong data-bind="text:fullname"></strong>
+                        </li>
+                        <li>
+                            Title: <span data-bind="text:title" class="accessory"></span>
+                        </li>
+                        <li>
+                            E-Mail: <a data-bind="attr:{href:'mailto:' + email, title:email}"><span data-bind="text:email" class="accessory"></span></a>
+                        </li>
+                        <li>
+                            Mobile: <span data-bind="text:mobile" class="accessory"></span>
+                        </li>
+                        <li>IM:
+                            <!-- ko if: imuri -->
+                            <a data-bind="attr:{href:imuri}"><span data-bind="text:imname" class="accessory"></span></a>
+                            <!-- /ko -->
+                            <!-- ko if: !imuri -->
+                            <span data-bind="text:imname" class="accessory"></span>
+                            <!-- /ko -->
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../assets/admin/admin_users.js?version=372"></script>
+    
+</body>
+</html>

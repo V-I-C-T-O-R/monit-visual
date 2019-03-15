@@ -1,0 +1,149 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Status | Host Status</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="../../apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="../../lib/css/styles.css?version=372">
+    <link rel="stylesheet" href="../../assets/status/statusdetail.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="../../"></a>
+                <a id="logout" target="webapp" href="../../login/logout.csp"></a>
+                <ul id="menu">
+                    <li>
+                        <a target="webapp" href="../../index.csp">Dashboard</a>
+                    </li>
+                    <li class="active">
+                        <a target="webapp" href="../../status/hosts/">Status</a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../reports/analytics/">Reports</a>
+                        <ul>
+                            <li><a target="webapp" href="../../reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="../../reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="../../reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a target="webapp" href="../../admin/general/">Admin</a>
+                        <ul>
+                            <li><a target="webapp" href="../../admin/general/">General</a></li>
+                            <li><a target="webapp" href="../../admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="../../admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="../../admin/users/">Users</a></li>
+                            <li><a target="webapp" href="../../admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="../../login/logout.csp">Logout</a></li>
+                </ul>
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>
+                    <span>Status </span>
+                    <a data-bind="text: hostname, click: goToAdminHost" href="#" id="hostname"></a>
+                </h1>
+            </div>
+            <div class="row-fluid yui-skin-sam">
+                <div class="span12">
+                    <ul class="tableView">
+                        <li>Status <span data-bind="text: hoststatus" class="accessory"></span></li>
+                        <li>Platform <span data-bind="text: platform" class="accessory"></span></li>
+                        <li>Number of CPUs <span data-bind="text: cpu" class="accessory"></span></li>
+                        <li>Memory <span data-bind="text: memory" class="accessory"></span></li>
+                        <li>Swap <span data-bind="text: swap" class="accessory"></span></li>
+                        <li>Charts <span class="accessory"><button data-bind="click: $root.goToAnalytics" class="btn btn-mini" title="Show charts"><i class="icon-chart"></i></button></span></li>
+                    </ul>
+                </div> <!-- span12 -->
+            </div> <!-- row -->
+            <div class="row-fluid yui-skin-sam">
+                <div class="span12">
+                    <form method="post" action="detail" name="actions" class="whitespace top">
+                        <a id="rowselectmode">Select All</a>
+                        <div id="serviceTable"></div>
+                        <div class="action" data-bind="visible: showAction">
+                            <button type="button" class="btn disabled" data-bind="click: doAction, css: {'btn-block': isPhone()}" value="start">Start</button>
+                            <button type="button" class="btn disabled" data-bind="click: doAction, css: {'btn-block': isPhone()}" value="stop">Stop</button>
+                            <button type="button" class="btn disabled" data-bind="click: doAction, css: {'btn-block': isPhone()}" value="restart">Restart</button>
+                            <button type="button" class="btn disabled" data-bind="click: doAction, css: {'btn-block': isPhone()}" value="monitor">Monitor</button>
+                            <button type="button" class="btn disabled" data-bind="click: doAction, css: {'btn-block': isPhone()}" value="unmonitor">Unmonitor</button>
+                            <span class="spinner-small hidden-phone" data-bind="visible: ajaxInProgress()" style="display:inline-block"></span>
+                        </div>                        
+                    </form>
+                </div> <!-- span12 -->
+            </div> <!-- row -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <div id="helpbox">
+        <div class="title"><h2>Host Details Help</h2></div>
+        <div class="content paragraphify">
+            <p>
+                This page display detailed host status. Status and information are from the last update from Monit. The table list all services running on the
+                host, that is, all services monitored by Monit. The table is automatically updated each 5 seconds. How often data is changed depends on your
+                Monit poll cycle on the host. I.e. the lower the poll-cycle Monit runs with, the closer the services will be displayed in "real-time".
+            </p>
+            <h3>Service Details</h3>
+            <p>
+                If you tap or hover the mouse cursor over a led light, a callout is displayed with detailed information about that service:
+                <img src="../../assets/status/popover.png" alt="snapshot" class="snapshot">
+                If the callout does not show, it means that Monit is either not monitoring this service or the service is being initialized.
+            </p>
+            <h3>Service Actions</h3>
+            <p>
+                To perform an action on a service, select the service from the table and click one of the action buttons. It is possible to select more than one
+                service (row). To de-select, click the row again or press the ESC key to de-select all. Only services registered with a start and stop method in
+                Monit can be (re)started and stopped, but all services can be monitored or unmonitored.
+            </p>
+            <p>
+                M/Monit delegates to Monit to perform the action on the service. M/Monit will wait up to 30 seconds for confirmation from Monit before timing
+                out, in which case it might be useful to reload this page to see if the request was executed by Monit later. Also check the <a target="webapp"
+                href="../../reports/events/">events log</a>.
+            </p>
+            <p>
+               Only admin users are allowed to perform an action on a service, if you are <i>not</i> an admin user, no action buttons are shown. If
+               the host is offline, buttons are also not shown.
+            </p>
+            <h3>Host charts</h3>
+            <p>
+                Click the chart button <a data-bind="attr: {href: '../../reports/analytics/?start=1&host=' + id()}" class="btn
+                btn-mini" title="Show charts"><i class="icon-chart"></i></a> to go to the analytics page and display real-time charts for this host.
+            </p>
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="../../lib/f/yui/2/utilities/utilities.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="../../lib/js/webapp.js?version=372"></script>
+    <script src="../../lib/f/jquery/jquery.getUrlParam.js?version=372"></script>
+    <script src="../../lib/f/knockout/knockout.js?version=372"></script>
+    <script src="../../lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="../../lib/js/error.js?version=372"></script>
+    <script src="../../lib/js/math.js?version=372"></script>
+    <script src="../../lib/js/ui.js?version=372"></script>
+    <script src="../../lib/js/help.js?version=372"></script>
+    <script src="../../lib/js/csrf.js?version=372"></script>
+    <script src="../../assets/status/statusdetail.js?version=372"></script>
+</body>
+</html>

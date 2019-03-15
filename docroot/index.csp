@@ -1,0 +1,224 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>M/Monit Dashboard</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="M/Monit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png"/>
+    <link rel="stylesheet" href="lib/css/styles.css?version=372">
+    <link rel="stylesheet" href="assets/dashboard.css?version=372">
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <div id="nav">
+                <a id="logo" target="webapp" href="."></a>
+                <a id="logout" target="webapp" href="login/logout.csp"></a>
+                <ul id="menu">
+                    <li class="active">
+                        <a target="webapp" href="index.csp">Dashboard</a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="status/hosts/">Status</a>
+                    </li>
+                    <li>
+                        <a target="webapp" href="reports/analytics/">Reports</a>
+                        <ul>
+                            <li><a target="webapp" href="reports/analytics/">Analytics</a></li>
+                            <li><a target="webapp" href="reports/uptime/">Uptime</a></li>
+                            <li><a target="webapp" href="reports/events/">Events</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a target="webapp" href="admin/general/">Admin</a>
+                        <ul>
+                            <li><a target="webapp" href="admin/general/">General</a></li>
+                            <li><a target="webapp" href="admin/hosts/">Hosts</a></li>
+                            <li><a target="webapp" href="admin/groups/">Groups</a></li>
+                            <li><a target="webapp" href="admin/users/">Users</a></li>
+                            <li><a target="webapp" href="admin/alerts/">Alerts</a></li>
+                        </ul>
+                    </li>
+                    <li id="logout-phone"><a target="webapp" href="login/logout.csp">Logout</a></li>
+                </ul> <!-- menu -->
+            </div> <!-- nav -->
+        </div><!-- header -->
+        <div id="main">
+            <div id="title">
+                <a href="#" id="help" class="help-button" title="Help" data-help="#helpbox"></a>
+                <h1>
+                    Latest status
+                </h1>
+            </div>
+            <div class="row-fluid">
+                <div class="span6 white-link-box" id="statusbox">
+                    <div class="title">
+                        <h2>Hosts Status</h2>
+                    </div>
+                    <div id="status"></div>
+                </div>
+                <div class="span6 white-link-box" id="eventsbox">
+                    <div class="title">
+                        <h2>Events in last 24-hours</h2>
+                    </div>
+                    <div id="events"></div>
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span12 white-box hide" data-bind="css:{hide: issues().length == 0}">
+                    <div class="title">
+                        <h2>Active errors and warnings <br class="visible-phone"> (<span data-bind="text: (issues().length < issuesTotal() ? issues().length + ' of ' + issuesTotal() : issuesTotal())"></span>)</h2>
+                    </div>
+                    <div class="content">
+                        <!-- ko foreach: issues -->
+                        <div class="alert fade in" data-bind="css: {'alert-error': type == 1}">
+                            <a class="close" data-dismiss="alert" title="Dismiss" data-bind="click:$root.dismissEvent">×</a>
+                            [<span data-bind="text:date"></span>] Host <strong><a target="webapp" data-bind="attr: { href: 'status/hosts/detail?id=' + hostid }, text: host"></a></strong> reported a problem with <strong><span data-bind="text: service"></span></strong>: <span data-bind="text: description"></span>
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                </div> <!-- span12 -->
+            </div> <!-- row -->
+        </div> <!-- main -->
+    </div> <!-- wrap -->
+    <div id="footer"> 
+        <div class="toleft dark-grey hidden-phone">Logged in as <?cs var:Request.RemoteUser ?></div>
+        <div class="toright hidden-phone">
+            <ul class="piped">
+                <li>Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</li>
+                <li><a href="http://mmonit.com/">M/Monit</a></li>
+                <li><a href="http://mmonit.com/monit/">Monit</a></li>
+                <li><a href="http://mmonit.com/wiki/">Wiki</a></li>
+            </ul>
+        </div>
+        <div id="copy" class="visible-phone">Copyright &copy; 2018 <a href="http://www.tildeslash.com/">Tildeslash</a>. All Rights Reserved.</div>
+    </div> <!-- footer -->
+    <div class="helpbox" id="welcome" data-bind="style: {display: showwelcome() ? 'block' : 'none'}">
+            <div class="title"><h2>Welcome to M/Monit</h2></div>
+            <div class="content paragraphify">
+                    <img src="img/login2x.png" alt="logo" class="toright">
+                    <h3>
+                            About M/Monit
+                    </h3>
+                    <p>
+                            M/Monit expand upon <a href="http://mmonit.com/monit/">Monit's</a> capabilities and provides monitoring and management of all your
+                            Monit enabled hosts from one easy to use web-interface. 
+                    </p>
+                    <p>
+                           From M/Monit, you can start, stop and restart services on any of your hosts running Monit.
+                    </p>
+                    <p>
+                            M/Monit collects key performance data from Monit and can display charts for performance and trend analysis across your system.
+                    </p>
+                    <h3>
+                            Getting started
+                    </h3>
+                    <p>
+                            The first step is to install and configure Monit on the hosts you wish to monitor. Please see the M/Monit <a
+                            href="http://www.mmonit.com/documentation/mmonit_manual.pdf">manual</a> to learn how to setup and connect Monit.
+                    </p>
+                    <p>
+                            Next, start using M/Monit to watch and manage your hosts and services. 
+                    </p>
+            </div>
+            <div class="footer">
+                    <label class="checkbox inline">
+                            <input type="checkbox" id="showwelcome" value="<?cs var:#welcome ?>" data-bind="checked: welcome" />Show at login
+                    </label>
+                    <button class="btn toright" data-bind="click: closeWelcome">Dismiss</button>
+            </div>
+    </div> <!-- welcome -->
+    <div id="helpbox">
+        <div class="title"><h2>Dashboard Help</h2></div>
+        <div class="content paragraphify">
+            <p>
+                This page provides a quick overview of the status of all hosts monitored by M/Monit and events in the last 24 hours. The charts refresh
+                themselves automatically every 5 seconds. The Host Status pie chart display the status of all hosts registered in M/Monit and if all hosts and
+                services are online, the pie chart should be all green.
+            </p>
+            <h3>Host Status</h3>
+            <p>
+                These are the possible pie chart colors and their meaning:
+            </p>
+            <div class="row-fluid">
+                <ul class="colors">
+                    <li style='color:#C0392B;'>
+                        Host is offline (Monit has died, the host has died or the network is down)
+                    </li>
+                    <li style='color:#E74C3C;'>
+                        Host with all monitored services offline.
+                    </li>
+                    <li style='color:#F39C12;'>
+                        Host with some services offline or in unmonitored state
+                    </li>
+                    <li style='color:#2ECC71;'>
+                        Host with all services online.
+                    </li>
+                    <li style='color:#bec3c7;'>
+                        The host is inactive (Monit was gracefuly stopped).
+                    </li>
+                    <li style='color:#95a4a7;'>
+                        The host has manually been set in the ignore state.
+                    </li>
+                </ul>
+            </div> <!-- row-fluid -->
+            <p>
+                A click anywhere in the pie chart will open the <a href="status/hosts/">Hosts Status</a> page. From here you can drill-down on each individual host and
+                see detailed information about the host and its monitored services and also start, stop or restart services.
+            </p>
+            <h3>Events in last 24-hours</h3>
+            <p>
+                The Events in last 24-hours chart, plot events coming in from Monit over the last 24-hours. Events are plotted from right to left. That is, the
+                most recent event are plotted rightmost in the chart. This is a stacked bar chart and each bar represent an aggregate of events in a 10-minute
+                time frame. The chart plots the following colorful events:
+            </p>
+            <div>
+                <ul class="colors">
+                    <li style='color:#2ECC71;'>
+                        Success - an error was fixed
+                    </li>
+                    <li style='color:#E74C3C;'>
+                        Failure - a service failed
+                    </li>
+                    <li style='color:#F39C12;'>
+                        Change - a service changed. E.g. was restarted, but not by Monit
+                    </li>
+                </ul>
+            </div>
+            <p>
+                If you hoover the mouse pointer over a plot-point, a tooltip is displayed with event information. A click
+                on the chart itself opens the <a href="reports/events/">Event Log</a>.
+            </p>
+            <h3>Active errors and warnings</h3>
+            <p>
+                A list of all active errors and warnings is displayed beneath the charts. Monit will try to fix a problem when it arises, but issues that have
+                not yet been fixed or cannot be fixed by Monit are listed here. In many ways this list represents your To-Do list.
+            </p> 
+            <p>
+                Should an issue be resolved later it is automatically dismissed from this list. You can also dismiss issues in the list by clicking the X in the
+                upper right corner of the box. Dismissal is per user and does not affect the list of other users. At anytime, you can get the full list of events
+                (including dismissed and resolved events) in the <a href="reports/events/">Event Log</a>. 
+            </p>
+        </div> <!-- content -->
+    </div> <!-- helpbox -->
+    <script src="lib/f/jquery/jquery.js?version=372"></script>
+    <script src="lib/f/jquery/jquery.mobile.vmouse.js?version=372"></script>
+    <script src="lib/js/webapp.js?version=372"></script>
+    <script src="lib/f/jquery/jquery.flot.js?version=372"></script>
+    <script src="lib/f/jquery/jquery.flot.pie.js?version=372"></script>
+    <script src="lib/f/jquery/jquery.flot.resize.js?version=372"></script>
+    <script src="lib/f/jquery/jquery.flot.stack.js?version=372"></script>
+    <script src="lib/f/jquery/jquery.flot.time.js?version=372"></script>
+    <script src="lib/f/knockout/knockout.js?version=372"></script>
+    <script src="lib/f/twbootstrap/js/bootstrap.js?version=372"></script>
+    <script src="lib/f/strftime/strftime.js?version=372"></script>
+    <script src="lib/js/error.js?version=372"></script>
+    <script src="lib/js/math.js?version=372"></script>
+    <script src="lib/js/chart.js?version=372"></script>
+    <script src="lib/js/help.js?version=372"></script>
+    <script src="assets/dashboard.js?version=372"></script>
+</body>
+</html>
