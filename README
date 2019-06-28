@@ -20,7 +20,7 @@
 4. bspatch mmonit mmonit mmonit.bsdiff
 5. bspatch libzild.so.0.0.0 libzild.so.0.0.0 libzild.so.0.0.0.bsdiff
 6. chmod +x mmonit  
-其中3中的mmonit为官方项目中的mmonit文件
+其中6中的mmonit为官方项目中的mmonit文件
 
 
 ##### 感谢大神们的辛勤付出[grimore.org](http://grimore.org/cracks)
