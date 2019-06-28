@@ -16,8 +16,10 @@
 #### 破解步骤
 1. brew install bsdiff
 2. uudecode -o mmonit.bsdiff < mmonit.bsdiff.uue
-3. bspatch mmonit mmonit mmonit.bsdiff
-4. chmod +x mmonit  
+3. uudecode -o libzild.so.0.0.0.bsdiff < libzild.so.0.0.0.bsdiff.uue
+4. bspatch mmonit mmonit mmonit.bsdiff
+5. bspatch libzild.so.0.0.0 libzild.so.0.0.0 libzild.so.0.0.0.bsdiff
+6. chmod +x mmonit  
 其中3中的mmonit为官方项目中的mmonit文件
 
 
