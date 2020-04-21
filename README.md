@@ -19,8 +19,8 @@
 3. uudecode -o libzild.so.0.0.0.bsdiff < libzild.so.0.0.0.bsdiff.uue
 4. bspatch mmonit mmonit mmonit.bsdiff
 5. bspatch libzild.so.0.0.0 libzild.so.0.0.0 libzild.so.0.0.0.bsdiff
-6. chmod +x mmonit   
+6. 用反编译出来的mmonit、libzild.so.0.0.0替换掉原项目中的同名文件
+7. chmod +x mmonit
 其中6中的mmonit为官方项目中的mmonit文件
 
-##### 感谢大神们的辛勤付出  
-[grimore.org](http://grimore.org/cracks)
+###### 感谢大神们的辛勤付出[grimore.org](http://grimore.org/cracks)
