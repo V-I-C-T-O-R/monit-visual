@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ $# -gt 2 ];then
+if [ $# -ne 2 ];then
    echo '传入参数过多,参数个数为2,参数1为ip,参数2为表名即可'
    exit 0
 fi
@@ -16,18 +16,18 @@ start_body_one_str=$base_str_title$process_str"if [ \$process -le 0 ];then"$line
 #echo $start_body_one_str
 monit_start_fname=$2"-start.sh"
 echo "生成$monit_start_fname文件"
-/bin/echo -e "$start_body_one_str" > /opt/monitor/monit-5.25.0/monit.d/$monit_start_fname
+/bin/echo -e "$start_body_one_str" > /home/wenhuanhuan/Downloads/$monit_start_fname
 
-stop_body_one_str=$base_str_title'PIDS=`''ps aux | grep '$table_name' | grep -v grep | awk "{print $2}"`\nfor pid in $PIDS\ndo'$line_str'kill -9 ${pid}'$line_str'echo "kill ${pid}"\ndone\necho "'$table_name'进程kill完成"'
+stop_body_one_str=$base_str_title'PIDS=`''ps aux | grep '$table_name' | grep -v grep | awk '"'{print \$2}'"'`\nfor pid in $PIDS\ndo'$line_str'kill -9 ${pid}'$line_str'echo "kill ${pid}"\ndone\necho "'$table_name'进程kill完成"'
 
 #echo $stop_body_one_str
 monit_stop_fname=$2"-stop.sh"
 echo "生成$monit_stop_fname"
-/bin/echo -e "$stop_body_one_str" > /opt/monitor/monit-5.25.0/monit.d/$monit_stop_fname
+/bin/echo -e "$stop_body_one_str" > /home/wenhuanhuan/Downloads/$monit_stop_fname
 
-monitor_table_str='check process '$table_name' with matching "'$table_name'"'$line_str'EVERY 3 CYCLES'$line_str'start program = "/bin/sh /opt/monitor/monit-5.25.0/monit.d/'$monit_start_fname'" with timeout 30 seconds'$line_str'stop program = "/bin/sh /opt/monitor/monit-5.25.0/monit.d/'$monit_start_fname'"'$line_str'if 2 restarts within 3 cycles then unmonitor\n'
+monitor_table_str='check process '$table_name' with matching "'$table_name'"'$line_str'EVERY 3 CYCLES'$line_str'start program = "/bin/sh /opt/monitor/monit-5.25.0/monit.d/'$monit_start_fname'" with timeout 30 seconds'$line_str'stop program = "/bin/sh /opt/monitor/monit-5.25.0/monit.d/'$monit_stop_fname'"'$line_str'if 2 restarts within 3 cycles then unmonitor\n'
 
 echo "插入内容到monit服务，更新配置..."
-/bin/echo -e "$monitor_table_str" >> /opt/monitor/monit-5.25.0/monit.d/business.conf
+/bin/echo -e "$monitor_table_str" >> /home/wenhuanhuan/Downloads/business.conf
 
 echo '更新配置完成'
