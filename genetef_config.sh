@@ -1,6 +1,6 @@
 #!/bin/bash
-if [ $# -ne 2 ];then
-   echo '传入参数过多,参数个数为2,参数1为ip,参数2为表名即可'
+if [ $# -lt 2 ];then
+   echo '传入参数过少,最小参数数量为2,参数1为ip,参数2为表名即可'
    exit 0
 fi
 
@@ -11,7 +11,12 @@ base_str_title="#!/bin/sh\n"
 process_str='process=`ps aux | grep '$table_name' | grep -v grep | wc -l`\n'
 line_str="\n    "
 
-start_body_one_str=$base_str_title$process_str"if [ \$process -le 0 ];then"$line_str"echo '"$table_name"进程不存在,准备启动'"$line_str"cd /opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/flume-ng"$line_str"nohup ./bin/flume-ng agent --conf /opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/flume-ng/conf --conf-file /data/flume_kudu_conf/"$table_name".conf --name agent -Dflume.log.file="$table_name".log > /dev/null 2>&1 &"$line_str"echo '"$table_name"启动完成'\nelse"$line_str"echo '"$table_name"进程存在,不操作'\nfi"
+if [ $# -eq 3 ];then
+   extra_params=$3
+   start_body_one_str=$base_str_title$process_str"if [ \$process -le 0 ];then"$line_str"echo '"$table_name"进程不存在,准备启动'"$line_str"cd /opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/flume-ng"$line_str"nohup ./bin/flume-ng agent --conf /opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/flume-ng/conf --conf-file /data/flume_kudu_conf/"$table_name".conf "$extra_params" --name agent -Dflume.log.file="$table_name".log > /dev/null 2>&1 &"$line_str"echo '"$table_name"启动完成'\nelse"$line_str"echo '"$table_name"进程存在,不操作'\nfi"
+else
+   start_body_one_str=$base_str_title$process_str"if [ \$process -le 0 ];then"$line_str"echo '"$table_name"进程不存在,准备启动'"$line_str"cd /opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/flume-ng"$line_str"nohup ./bin/flume-ng agent --conf /opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/flume-ng/conf --conf-file /data/flume_kudu_conf/"$table_name".conf --name agent -Dflume.log.file="$table_name".log > /dev/null 2>&1 &"$line_str"echo '"$table_name"启动完成'\nelse"$line_str"echo '"$table_name"进程存在,不操作'\nfi"
+fi
 
 #echo $start_body_one_str
 monit_start_fname=$2"-start.sh"
